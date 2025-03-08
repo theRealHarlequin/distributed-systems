@@ -1,23 +1,21 @@
-#
-#   Hello World server in Python
-#   Binds REP socket to tcp://*:5555
-#   Expects b"Hello" from client, replies with b"World"
-#
-
+# client_resp.py
 import time
 import zmq
+import logging
+from logger import Logger
+
+# Initialize logger
+log = Logger()
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 while True:
-    #  Wait for next request from client
     message = socket.recv()
-    print(f"Received request: {message}")
+    log.log(f"Received request: {message}", level=logging.INFO)
 
-    #  Do some 'work'
-    time.sleep(1)
+    time.sleep(1)  # Simulate work
 
-    #  Send reply back to client
     socket.send_string("World")
+    log.log("Sent response: World", level=logging.INFO)

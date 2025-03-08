@@ -1,10 +1,11 @@
+# logger.py
 import logging
 import threading
 import os
 from datetime import datetime
 
 
-class ThreadSafeLogger:
+class Logger:
     _instance = None
     _lock = threading.Lock()
 
@@ -21,10 +22,11 @@ class ThreadSafeLogger:
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
         self.logger = logging.getLogger("ThreadSafeLogger")
         self.logger.setLevel(logging.DEBUG)
-        self.name_dict = {}
 
-        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s]  %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
-        console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
+        file_formatter = logging.Formatter("%(asctime)s - [%(levelname)s][%(threadName)s]: %(message)s",
+                                           datefmt='%Y-%m-%d %H:%M:%S')
+        console_formatter = logging.Formatter("%(asctime)s - [%(levelname)s][%(threadName)s]: %(message)s",
+                                           datefmt='%Y-%m-%d %H:%M:%S')
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
@@ -36,31 +38,9 @@ class ThreadSafeLogger:
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
 
-    def log(self, message, name, level=logging.INFO):
-        thread_name = threading.current_thread().name
-        self.name_dict[thread_name] = name
-        log_message = f"[{thread_name} - {name}]: {message}"
-
+    def log(self, msg,  level=logging.INFO):
+        # Get the current thread's name directly
         if level == logging.DEBUG:
-            self.logger.debug(log_message)
+            self.logger.debug(msg)
         else:
-            self.logger.info(log_message)
-
-
-# Example usage:
-if __name__ == "__main__":
-    def worker(thread_name, logger):
-        logger.log("This is an info message.", thread_name, logging.INFO)
-        logger.log("This is a debug message.", thread_name, logging.DEBUG)
-
-
-    logger = ThreadSafeLogger()
-    threads = []
-    logger.log("start_Tool", "main", logging.INFO)
-    for i in range(5):
-        t = threading.Thread(target=worker, args=(f"Worker-{i}", logger), name=f"Thread-{i}")
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+            self.logger.info(msg)
