@@ -1,11 +1,11 @@
 # server_req.py
 import zmq
 from logger import Logger
-import logging, threading
+import logging, threading, os
 
 # Initialize logger
 log = Logger()
-threading.current_thread().name = "Server_Req"
+threading.current_thread().name = os.path.splitext(os.path.basename(os.path.abspath(__file__)))[0]
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)

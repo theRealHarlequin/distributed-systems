@@ -8,15 +8,16 @@ from logger import Logger
 current_dir = os.path.dirname(os.path.abspath(__file__))
 log = Logger()
 
-_scripts = ["client_resp.py", "server_req.py"]
-_chapter = "_00_getting_started"
-_folder = "_00_req_resp"
+_scripts = ["proxy.py", "pub.py", "sub.py"]
+_chapter = "_99_examples"
+_area = "zeromq_protobuf"
+_folder = "pub_sub_proxy"
 processes = []
 log.log(msg="init_env", level=logging.INFO)
 
 # Start all scripts
 for script in _scripts:
-    script_path = os.path.join(current_dir, _chapter, _folder, script)  # Ensure correct path
+    script_path = os.path.join(current_dir, _chapter, _area, _folder, script)  # Ensure correct path
 
     p = subprocess.Popen(["python", script_path])
     log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)

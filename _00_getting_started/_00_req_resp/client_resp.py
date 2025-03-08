@@ -1,11 +1,12 @@
 # client_resp.py
 import time
 import zmq
-import logging
+import logging, threading, os
 from logger import Logger
 
 # Initialize logger
 log = Logger()
+threading.current_thread().name = os.path.splitext(os.path.basename(os.path.abspath(__file__)))[0]
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)

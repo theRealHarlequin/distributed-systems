@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+enum Temp_Unit {
+	TEMP_UNIT_UNSPECIFIED = 0;
+	TEMP_UNIT_KELVIN = 1;
+	TEMP_UNIT_CELSIUS = 2;
+}
+
+message Temp_Request {
+	Temp_Unit temp_unit = 1;
+	int32 nvalues = 2;
+}
+
+message Temp_Response {
+	Temp_Unit temp_unit = 1;
+	int32 nvalues = 2;
+	repeated int32 temp_value = 3;
+}
