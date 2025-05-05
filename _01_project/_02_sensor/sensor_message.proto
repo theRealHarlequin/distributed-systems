@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+enum sensor_signal_unit {
+	UNIT_UNSPECIFIED = 0;
+	UNIT_TEMP_KELVIN = 1;
+	UNIT_TEMP_CELSIUS = 2;
+	UNIT_PRES_BAR = 3;
+	UNIT_PRES_PASCAL = 4;
+	UNIT_ROTA_RPM = 5;
+}
+
+message SensorStatus {
+	uint32 timestamp = 1;
+	uint32 id = 2;
+	int32 sig_value = 3;
+	uint32 factor = 4;
+	uint32 offset = 5;
+	sensor_signal_unit temp_unit = 6;
+}
+
+message ComJoin{
+	uint32 connect = 1;
+}
+
+message ComJoinResp{
+	uint32 sensor_id = 1;
+}
