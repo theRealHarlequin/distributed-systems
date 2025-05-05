@@ -9,7 +9,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 log = Logger()
 central_log_path = log.get_log_file_path()
 
-_scripts = [f"_03_data_output\\console_table.py"]
 processes = []
 
 log.log(msg="init_env", level=logging.INFO)
@@ -36,7 +35,7 @@ class sim_control:
         script_path = os.path.join(current_dir, script)  # Ensure correct path
 
         if run_in_new_console:
-            p = subprocess.Popen(["python", script_path, self.log_path],
+            p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
                                  creationflags=subprocess.CREATE_NEW_CONSOLE )
         else:
             p = subprocess.Popen(["python", script_path, self.log_path])

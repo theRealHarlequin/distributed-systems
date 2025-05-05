@@ -9,6 +9,12 @@ enum sensor_signal_unit {
 	UNIT_ROTA_RPM = 5;
 }
 
+enum sensor_type {
+	TYPE_TEMPERATURE = 0;
+	TYPE_PRESSURE = 1;
+	TYPE_ROTATION = 2;
+}
+
 message SensorStatus {
 	uint32 timestamp = 1;
 	uint32 id = 2;
@@ -20,6 +26,8 @@ message SensorStatus {
 
 message ComJoin{
 	uint32 connect = 1;
+	sensor_type type = 2;
+	uint32 sample_freq = 3;
 }
 
 message ComJoinResp{

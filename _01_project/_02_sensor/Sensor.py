@@ -1,7 +1,6 @@
-import random
+import random, zmq, time, logging
 from enum import Enum
 from abc import ABC
-import time, logging
 from logger import Logger
 import sensor_message_pb2 as sensor_msg
 
@@ -15,9 +14,7 @@ class Sensor(ABC):
     """A class representing a generic sensor."""
     def __init__(self, sensor_type: SensorType, offset:float, factor:float, unit:str, min_value_area: int,
                  max_value_area: int, send_freq_ms:int, log_file_path:str=None ):
-        """
-        Initialize a sensor.
-        """
+        # Init Sensor
         self.id: int
         self.type: SensorType = sensor_type
         self.offset: float = offset
@@ -30,6 +27,15 @@ class Sensor(ABC):
         self._send_frequency = send_freq_ms
         self.connected = False
 
+        # Init Connection
+        context = zmq.Context()
+        self.socket_com_join = context.socket(zmq.REQ)
+        self.socket_com_join.connect("tcp://localhost:5555")
+
+        self.socket_data_transf = None
+
+
+
         # Init Logger
         self.log = Logger()
         if log_file_path:
@@ -37,15 +43,32 @@ class Sensor(ABC):
         self.log.log(msg=f"Init new Sensor of type {sensor_type}", level=logging.INFO)
 
         self._connect()
-        while(1):
+        while 1:
             self._generate_value()
             self._send_data()
             time.sleep(self._send_frequency/1000)
 
     def _connect(self):
         """Simulate connecting the sensor."""
+
+        context = zmq.Context()
+
+        #  Socket to talk to server
+        self.log.log(msg=f"[Sensor_Client] Start Connection to Sensor Server ...", level=logging.INFO)
+
+        sensor_comJoin = sensor_msg.ComJoin()
+        sensor_comJoinResp = sensor_msg.ComJoinResp()
+
+        sensor_comJoin.connect = 1
+        self.log.log(msg=f"[Sensor_Client] Sending request: Communication Join", level=logging.INFO)
+        self.socket_com_join.send(sensor_comJoin.SerializeToString())
+
+        #  Get the reply.
+        message = self.socket_com_join.recv()
+        sensor_comJoinResp.ParseFromString(message)
+        self.log.log(msg=f"[Sensor_Client] Received response: Sensor ID - {sensor_comJoinResp.sensor_id}", level=logging.INFO)
         self.connected = True
-        self.id =1
+        self.id = sensor_comJoinResp.sensor_id
 
 
     def _generate_value(self):
