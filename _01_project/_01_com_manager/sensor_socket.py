@@ -1,4 +1,5 @@
 import time, logging, zmq, argparse
+from typing import List, Dict
 
 from logger import Logger
 from _01_project._02_sensor import sensor_message_pb2 as sensor_msg
@@ -23,10 +24,10 @@ class SensorServer:
         self.sensor_data = sensor_msg.SensorStatus()
 
         # Attributes:
-        self.seonsor_values:dict ={}
+        self.sensor_values: List[Dict] = []
         self.new_sensor_id = 1
 
-    def run_server(self,):
+    def run_server(self):
         # Init Logger
         self.log.log(msg=f"[Sensor_Server] Listening...", level=logging.INFO)
 
@@ -34,15 +35,23 @@ class SensorServer:
             #  Wait for next request from client
             message = self.socket_com_join.recv()
             self.sensor_comJoin.ParseFromString(message)
-            self.log.log(msg=f"[Sensor_Server] Received Sensor request to connect...", level=logging.INFO)
 
-            time.sleep(1)
+            self.log.log(msg=f"[Sensor_Server] Received Sensor request to connect. Type: {self.sensor_comJoin.type}"
+                             f", Sample_Frequency: {self.sensor_comJoin.sample_freq}", level=logging.INFO)
+            new_sensor_dict = dict(id=self.new_sensor_id,
+                                   sample_freq=self.sensor_comJoin.sample_freq,
+                                   type=self.sensor_comJoin.type)
+            self.sensor_values.append(new_sensor_dict)
+
+            time.sleep(0.5)
+
             self.sensor_comJoinResp.sensor_id = self.new_sensor_id
-            self.new_sensor_id += 1
 
             #  Send reply back to client
-            self.log.log(msg=f"[Sensor_Server] Sending response: Sensor registration ID: {self.sensor_comJoinResp.sensor_id}", level=logging.INFO)
+            self.log.log(msg=f"[Sensor_Server] Sending response: Sensor registration ID: {self.sensor_comJoinResp.sensor_id}",
+                         level=logging.INFO)
             self.socket_com_join.send(self.sensor_comJoinResp.SerializeToString())
+            self.new_sensor_id += 1
 
 
 def parse_args():

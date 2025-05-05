@@ -24,7 +24,7 @@ class Sensor(ABC):
         self._min_value: int = min_value_area
         self._max_value: int = max_value_area
         self._previous_values:list = []
-        self._send_frequency = send_freq_ms
+        self._sample_freq = send_freq_ms
         self.connected = False
 
         # Init Connection
@@ -46,7 +46,7 @@ class Sensor(ABC):
         while 1:
             self._generate_value()
             self._send_data()
-            time.sleep(self._send_frequency/1000)
+            time.sleep(self._sample_freq / 1000)
 
     def _connect(self):
         """Simulate connecting the sensor."""
@@ -60,6 +60,8 @@ class Sensor(ABC):
         sensor_comJoinResp = sensor_msg.ComJoinResp()
 
         sensor_comJoin.connect = 1
+        sensor_comJoin.type = self.type
+        sensor_comJoin.sample_freq = self._sample_freq
         self.log.log(msg=f"[Sensor_Client] Sending request: Communication Join", level=logging.INFO)
         self.socket_com_join.send(sensor_comJoin.SerializeToString())
 
@@ -88,7 +90,7 @@ class Sensor(ABC):
 
 class TempSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=SensorType.TEMPERATURE,
+        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_TEMPERATURE,
                          offset=5.0,
                          factor=1.0,
                          unit=sensor_msg.sensor_signal_unit.UNIT_TEMP_CELSIUS,
@@ -98,7 +100,7 @@ class TempSensor(Sensor):
 
 class PresSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=SensorType.TEMPERATURE,
+        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_PRESSURE,
                        offset=0.0,
                        factor=1.0,
                        unit=sensor_msg.sensor_signal_unit.UNIT_PRES_BAR,
@@ -108,7 +110,7 @@ class PresSensor(Sensor):
 
 class RotSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=SensorType.TEMPERATURE,
+        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_ROTATION,
                          offset=0.0,
                          factor=1.0,
                          unit=sensor_msg.sensor_signal_unit.UNIT_ROTA_RPM,
