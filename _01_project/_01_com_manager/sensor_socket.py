@@ -1,6 +1,6 @@
 import time, logging, zmq, argparse
 from typing import List, Dict
-
+from _01_project._99_helper.helper import convert_sensor_type_enum_2_str
 from logger import Logger
 from _01_project._02_sensor import sensor_message_pb2 as sensor_msg
 
@@ -36,7 +36,8 @@ class SensorServer:
             message = self.socket_com_join.recv()
             self.sensor_comJoin.ParseFromString(message)
 
-            self.log.log(msg=f"[Sensor_Server] Received Sensor request to connect. Type: {self.sensor_comJoin.type}"
+            self.log.log(msg=f"[Sensor_Server] Received Sensor request to connect. "
+                             f"Type: {convert_sensor_type_enum_2_str(self.sensor_comJoin.type)}"
                              f", Sample_Frequency: {self.sensor_comJoin.sample_freq}", level=logging.INFO)
             new_sensor_dict = dict(id=self.new_sensor_id,
                                    sample_freq=self.sensor_comJoin.sample_freq,

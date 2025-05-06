@@ -19,6 +19,7 @@ class sim_control:
         # Get the directory of the current script
         self.current_dir = os.path.dirname(os.path.abspath(__file__))
         self.processes = []
+
         #Init Logger
         self.log = Logger()
         self.log_path = log.get_log_file_path()
