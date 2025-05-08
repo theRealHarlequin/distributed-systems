@@ -16,12 +16,12 @@ enum sensor_type {
 }
 
 message SensorStatus {
-	uint32 timestamp = 1;
+	uint64 timestamp = 1;
 	uint32 id = 2;
 	int32 sig_value = 3;
 	uint32 factor = 4;
 	uint32 offset = 5;
-	sensor_signal_unit temp_unit = 6;
+	sensor_signal_unit sig_unit = 6;
 }
 
 message ComJoin{

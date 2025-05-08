@@ -1,76 +1,72 @@
-import random, zmq, time, logging
+import random, zmq, logging, zmq.asyncio, asyncio, sys
 from enum import Enum
 from abc import ABC
 from logger import Logger
+from datetime import datetime as dt
 import sensor_message_pb2 as sensor_msg
-
-class SensorType(Enum):
-    """Enumeration for different types of sensors."""
-    PRESSURE = 1
-    TEMPERATURE = 2
-    ROTATION = 3
+from _01_project._99_helper.helper import conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str, conv_sig_value
 
 class Sensor(ABC):
     """A class representing a generic sensor."""
-    def __init__(self, sensor_type: SensorType, offset:float, factor:float, unit:str, min_value_area: int,
+    def __init__(self, sensor_type: sensor_msg.sensor_type, offset:float, factor:float, unit:str, min_value_area: int,
                  max_value_area: int, send_freq_ms:int, log_file_path:str=None ):
-        # Init Sensor
-        self.id: int
-        self.type: SensorType = sensor_type
+
+        ## Init Sensor
+        self.id: int = 0
+        self.type: sensor_msg.sensor_type = sensor_type
         self.offset: float = offset
         self.factor: float = factor
         self.unit = unit
         self.value: int
+        self.value_encod:float # calculated value: factor * value + offset
         self._min_value: int = min_value_area
         self._max_value: int = max_value_area
         self._previous_values:list = []
         self._sample_freq = send_freq_ms
         self.connected = False
 
-        # Init Connection
-        context = zmq.Context()
-        self.socket_com_join = context.socket(zmq.REQ)
-        self.socket_com_join.connect("tcp://localhost:5555")
+        ## Init Connection
+        self.ctx_req = zmq.asyncio.Context()
+        self.ctx_pub = zmq.asyncio.Context()
 
-        self.socket_data_transf = None
+        # REQ socket
+        self.req_socket = self.ctx_req.socket(zmq.REQ)
+        self.req_socket.connect("tcp://localhost:5551")
 
+        # PUB socket
+        self.pub_socket = self.ctx_pub.socket(zmq.PUB)
+        self.pub_socket.connect("tcp://localhost:5550")
 
+        # Init Messages
+        self.sensor_comJoin_msg = sensor_msg.ComJoin()
+        self.sensor_comJoinResp_msg = sensor_msg.ComJoinResp()
+        self.sensor_data_msg = sensor_msg.SensorStatus()
 
-        # Init Logger
+        ## Init Logger
         self.log = Logger()
         if log_file_path:
             self.log._initialize(log_file_path)
-        self.log.log(msg=f"Init new Sensor of type {sensor_type}", level=logging.INFO)
+        self.log.log(msg=f"Init new Sensor of type [{conv_sensor_type_enum_2_str(sensor_type)}]", level=logging.INFO)
 
-        self._connect()
-        while 1:
-            self._generate_value()
-            self._send_data()
-            time.sleep(self._sample_freq / 1000)
-
-    def _connect(self):
+    async def _connect(self):
         """Simulate connecting the sensor."""
-
-        context = zmq.Context()
 
         #  Socket to talk to server
         self.log.log(msg=f"[Sensor_Client] Start Connection to Sensor Server ...", level=logging.INFO)
 
-        sensor_comJoin = sensor_msg.ComJoin()
-        sensor_comJoinResp = sensor_msg.ComJoinResp()
-
-        sensor_comJoin.connect = 1
-        sensor_comJoin.type = self.type
-        sensor_comJoin.sample_freq = self._sample_freq
+        self.sensor_comJoin_msg.connect = 1
+        self.sensor_comJoin_msg.type = self.type
+        self.sensor_comJoin_msg.sample_freq = self._sample_freq
         self.log.log(msg=f"[Sensor_Client] Sending request: Communication Join", level=logging.INFO)
-        self.socket_com_join.send(sensor_comJoin.SerializeToString())
+        self.req_socket.send(self.sensor_comJoin_msg.SerializeToString())
 
         #  Get the reply.
-        message = self.socket_com_join.recv()
-        sensor_comJoinResp.ParseFromString(message)
-        self.log.log(msg=f"[Sensor_Client] Received response: Sensor ID - {sensor_comJoinResp.sensor_id}", level=logging.INFO)
+        message = await self.req_socket.recv()
+        self.sensor_comJoinResp_msg.ParseFromString(message)
+        self.log.log(msg=f"[Sensor_Client] Received response: Sensor ID - {self.sensor_comJoinResp_msg.sensor_id}",
+                     level=logging.INFO)
         self.connected = True
-        self.id = sensor_comJoinResp.sensor_id
+        self.id = self.sensor_comJoinResp_msg.sensor_id
 
 
     def _generate_value(self):
@@ -80,13 +76,43 @@ class Sensor(ABC):
             self._previous_values.pop(0)
 
         # Mittelwert berechnen
-        raw_value = sum(self._previous_values) / len(self._previous_values)
+        self.value = int(sum(self._previous_values) / len(self._previous_values))
 
-        self.value = (self.factor * raw_value) + self.offset
-        self.log.log(msg=f"Sensor no. {self.id} new measured data. value = {self.value}", level=logging.INFO)
+        self.value_encod = (self._conv_factor_two_dec() * self.value) + self._conv_offset_two_dec()
 
-    def _send_data(self):
-        self.log.log(msg=f"Sending data from sensor {self.id}: {self.value:.2f} {self.unit}", level=logging.INFO)
+    def _conv_offset_two_dec(self) -> float:
+        return int(self.value * 100) / 100
+
+    def _conv_factor_two_dec(self) -> float:
+        return int(self.value * 100) / 100
+
+    async def _send_data(self):
+        self.log.log(msg=f"Sending data from sensor {self.id}: raw value {self.value:.2f} - "
+                         f"{conv_sig_value(factor=self.factor, offset=self.offset, value=self.value):.2f} "
+                         f"{conv_sensor_sig_unit_enum_2_str(enum_value=self.unit)}", level=logging.INFO)
+
+        # generate MSG
+        self.sensor_data_msg.timestamp = int(dt.now().timestamp() * 100)
+        self.sensor_data_msg.id = self.id
+        self.sensor_data_msg.factor = int(self.factor * 100)
+        self.sensor_data_msg.offset = int(self.offset * 100)
+        self.sensor_data_msg.sig_unit = self.unit
+        self.sensor_data_msg.sig_value = self.value
+
+        self.pub_socket.send(self.sensor_data_msg.SerializeToString())
+
+    async def start(self):
+        # Connect first
+        await self._connect()
+
+        # Give SUBs a moment to connect
+        await asyncio.sleep(1)
+
+        # Start cyclic publishing
+        while True:
+            self._generate_value()
+            await self._send_data()
+            await asyncio.sleep(self._sample_freq / 1000)
 
 class TempSensor(Sensor):
     def __init__(self):
@@ -120,5 +146,11 @@ class RotSensor(Sensor):
 
 # Example usage
 if __name__ == "__main__":
-    temp_sensor = TempSensor()
-    print(1)
+    if sys.platform.startswith("win"):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    async def main():
+        temp_sensor = TempSensor()
+        await temp_sensor.start()
+
+    asyncio.run(main())
