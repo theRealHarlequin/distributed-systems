@@ -29,6 +29,12 @@ def conv_sensor_type_enum_2_str(enum_value: enum):
         sensor = "Rotation_Sensor"
     return sensor
 
+def get_all_sensor_var() -> dict:
+    ret_dict = {}
+    for sensor in sensor_msg.sensor_type:
+        ret_dict[sensor] = conv_sensor_type_enum_2_str(sensor)
+    return ret_dict
+
 
 def conv_sig_value(value: float, factor: float, offset: float) -> float:
     return (value * int(factor * 1000) / 1000 + int(offset * 1000) / 1000)

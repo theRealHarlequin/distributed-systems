@@ -1,6 +1,6 @@
 import logging
 import subprocess
-import time
+from _99_helper.helper import get_all_sensor_var
 import os
 from logger import Logger
 
@@ -44,29 +44,46 @@ class sim_control:
         log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)
         processes.append(p)
 
+    def _get_validated_input(self, prompt: str, min_value: int = None, max_value: int = None) -> int:
+        while True:
+            user_input = input(prompt)
+
+            if user_input.strip().isdigit():
+                value = int(user_input)
+                if (min_value is not None and value < min_value):
+                    print(f"Input must be >= {min_value}.")
+                elif (max_value is not None and value > max_value):
+                    print(f"Input must be <= {max_value}.")
+                else:
+                    return value
+            else:
+                print("Input must be an integer.")
+
 
     def clear_console(self):
         """Clear the console output."""
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def _add_sensor_to_system(self):
-        """Example task 1."""
         print("Running - Add Sensor to System...")
 
+        print(f"Select Sensor Type:")
+        for key, val in get_all_sensor_var():
+            print(f"\t{key}. {val}")
+
+        sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (1-3): " , min_value=1, max_value=3)
+        ##TODO complete creation of sensor
         input("Press Enter to return to the menu.")
 
     def _remove_sensor_of_system(self):
-        """Example task 2."""
         print("Running - Remove Sensor of System...")
         input("Press Enter to return to the menu.")
 
     def _change_threshold_value(self):
-        """Example task 3."""
         print("Running - Change Threshold Value...")
         input("Press Enter to return to the menu.")
 
     def _exit_program(self):
-        """Exit the program."""
         print("Exiting program & killing all processes. Goodbye!")
 
         for p in processes:  # Kill all processes
