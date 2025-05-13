@@ -1,6 +1,7 @@
 import logging
 import subprocess
-from _99_helper.helper import get_all_sensor_var
+from _99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
+from _02_sensor import sensor_message_pb2 as sensor_msg
 import os
 from logger import Logger
 
@@ -34,14 +35,13 @@ class sim_control:
 
     def start_new_subprocess(self, script:str):
         script_path = os.path.join(current_dir, script)  # Ensure correct path
-
+        log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)
         if run_in_new_console:
             p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
                                  creationflags=subprocess.CREATE_NEW_CONSOLE )
         else:
             p = subprocess.Popen(["python", script_path, self.log_path])
 
-        log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)
         processes.append(p)
 
     def _get_validated_input(self, prompt: str, min_value: int = None, max_value: int = None) -> int:
@@ -67,12 +67,44 @@ class sim_control:
     def _add_sensor_to_system(self):
         print("Running - Add Sensor to System...")
 
-        print(f"Select Sensor Type:")
-        for key, val in get_all_sensor_var():
-            print(f"\t{key}. {val}")
+        sensor_type_dict = get_all_sensor_var()
+        sensor_list_str=""
+        for key in get_all_sensor_var():
+            sensor_list_str += f"    {key} -> {sensor_type_dict[key]} -"
+        print(f"Select Sensor Type: {sensor_list_str}")
 
-        sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (1-3): " , min_value=1, max_value=3)
-        ##TODO complete creation of sensor
+        inp_sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (0-2): ",
+                                                min_value=0,
+                                                max_value=2)
+        print(f"Selected SensorType: {conv_sensor_type_enum_2_str(inp_sensor_type)} - Creating sensor...")
+        #inp_default_setup = self._get_validated_input(prompt=f"SensorSetup as default values (1) or own values (0): ",
+        #                                          min_value=0,
+        #                                          max_value=1)
+        #if inp_default_setup == 1:
+        #    # Create a sensor on default values
+        #
+        #inp_send_freq = self._get_validated_input(prompt=f"What is the sensor frequency on the network (100...10'000ms): ",
+        #                                      min_value=100,
+        #                                      max_value=10000)
+        #inp_offset = self._get_validated_input(prompt=f"How big is the Offset of the Sensor? Value = Factor * RawValue + Offset: ",
+        #                                      min_value=0,
+        #                                      max_value=1)
+        #inp_factor = self._get_validated_input(prompt=f"How big is the Factor of the Sensor? Value = Factor * RawValue + Offset: ",
+        #                                      min_value=0,
+        #                                      max_value=1)
+        #inp_min_value_area = self._get_validated_input(prompt=f"What is the smallest value of the sensor area? (between 0 and 1000): ",
+        #                                      min_value=0,
+        #                                      max_value=1000)
+        #inp_max_value_area = self._get_validated_input(prompt=f"What is the highest value of the sensor area? (Greater than smallest) (between 0 and 1000):",
+        #                                      min_value=0,
+        #                                      max_value=1000)
+        if inp_sensor_type == sensor_msg.sensor_type.TYPE_ROTATION:
+            self.start_new_subprocess(script=r"_02_sensor/rotation_sensor.py")
+        elif inp_sensor_type == sensor_msg.sensor_type.TYPE_TEMPERATURE:
+            self.start_new_subprocess(script=r"_02_sensor/temperature_sensor.py")
+        elif inp_sensor_type == sensor_msg.sensor_type.TYPE_PRESSURE:
+            self.start_new_subprocess(script=r"_02_sensor/pressure_sensor.py1")
+        print("")
         input("Press Enter to return to the menu.")
 
     def _remove_sensor_of_system(self):

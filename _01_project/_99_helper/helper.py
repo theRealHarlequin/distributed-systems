@@ -31,8 +31,8 @@ def conv_sensor_type_enum_2_str(enum_value: enum):
 
 def get_all_sensor_var() -> dict:
     ret_dict = {}
-    for sensor in sensor_msg.sensor_type:
-        ret_dict[sensor] = conv_sensor_type_enum_2_str(sensor)
+    for sensor in sensor_msg.sensor_type.DESCRIPTOR.values:
+        ret_dict[sensor.name] = sensor.index
     return ret_dict
 
 
