@@ -38,7 +38,7 @@ class sim_control:
         log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)
         if run_in_new_console:
             p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
-                                 creationflags=subprocess.CREATE_NEW_CONSOLE )
+                                 start_new_session=True, creationflags=subprocess.CREATE_NEW_CONSOLE )
         else:
             p = subprocess.Popen(["python", script_path, self.log_path])
 
@@ -103,7 +103,7 @@ class sim_control:
         elif inp_sensor_type == sensor_msg.sensor_type.TYPE_TEMPERATURE:
             self.start_new_subprocess(script=r"_02_sensor/temperature_sensor.py")
         elif inp_sensor_type == sensor_msg.sensor_type.TYPE_PRESSURE:
-            self.start_new_subprocess(script=r"_02_sensor/pressure_sensor.py1")
+            self.start_new_subprocess(script=r"_02_sensor/pressure_sensor.py")
         print("")
         input("Press Enter to return to the menu.")
 
@@ -124,10 +124,11 @@ class sim_control:
 
     def main_menu(self):
         """Display the main menu and handle user input."""
-        ### test prep
+        # --------------- start Servers ---------------
+        # start Sensor Server
+        self.start_new_subprocess(script="_01_com_manager/sensor_server_socket.py")
 
-
-        ###
+        # start loop
         while True:
             self.clear_console()
             print("=== Main Menu ===")
