@@ -1,7 +1,7 @@
 import logging
 import subprocess
 from _99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
-from _02_sensor import sensor_message_pb2 as sensor_msg
+from _02_data_source import sensor_message_pb2 as sensor_msg
 import os
 from logger import Logger
 
@@ -99,16 +99,17 @@ class sim_control:
         #                                      min_value=0,
         #                                      max_value=1000)
         if inp_sensor_type == sensor_msg.sensor_type.TYPE_ROTATION:
-            self.start_new_subprocess(script=r"_02_sensor/rotation_sensor.py")
+            self.start_new_subprocess(script=r"_02_data_source/rotation_sensor.py")
         elif inp_sensor_type == sensor_msg.sensor_type.TYPE_TEMPERATURE:
-            self.start_new_subprocess(script=r"_02_sensor/temperature_sensor.py")
+            self.start_new_subprocess(script=r"_02_data_source/temperature_sensor.py")
         elif inp_sensor_type == sensor_msg.sensor_type.TYPE_PRESSURE:
-            self.start_new_subprocess(script=r"_02_sensor/pressure_sensor.py")
+            self.start_new_subprocess(script=r"_02_data_source/pressure_sensor.py")
         print("")
         input("Press Enter to return to the menu.")
 
     def _remove_sensor_of_system(self):
         print("Running - Remove Sensor of System...")
+        self._get_validated_input(prompt=f"Sensor ID to delete:): ",min_value= 1, max_value= len())
         input("Press Enter to return to the menu.")
 
     def _change_threshold_value(self):

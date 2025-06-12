@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+
+enum request_id {
+	GET_SENSOR_COUNT = 0;
+	GET_ALERT_THRESHOLD = 1;
+	SET_ALERT_THRESHOLD = 2;
+	DISPLAY_GRAPH = 4;
+}
+
+message RDBI {
+	request_id id = 1;
+	uint32 value_0 =2;
+	uint32 value_1 =3;
+	uint32 value_2 =4;
+	uint32 value_3 =5;
+	uint32 value_4 =6;
+	uint32 value_5 =7;
+	uint32 value_6 =8;
+	uint32 value_7 =9;
+}
+
+message RDBI_resp {
+	request_id id = 1;
+	uint32 value_0 =2;
+	uint32 value_1 =3;
+	uint32 value_2 =4;
+	uint32 value_3 =5;
+	uint32 value_4 =6;
+	uint32 value_5 =7;
+	uint32 value_6 =8;
+	uint32 value_7 =9;
+}
