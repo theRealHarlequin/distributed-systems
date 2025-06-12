@@ -4,7 +4,7 @@ from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_sig_
 from logger import Logger
 from _01_project._02_data_source import sensor_message_pb2 as sensor_msg
 from _01_project._01_com_manager import system_message_pb2 as system_msg
-from _01_project._01_com_manager.data_structure import SensorData
+from _01_project._01_com_manager.data_structure import SensorItem, SensorStatus
 import asyncio, zmq, sys, zmq.asyncio
 from datetime import datetime as dt
 
@@ -43,11 +43,17 @@ class SensorServer:
         self.ctrl_response_structure = system_msg.RDBI_resp()
 
         # Attributes:
-        self.sensor_values: List[SensorData] = []
+        self.sensor_database: List[SensorItem] = []
         self.new_sensor_id = 1
 
         self.log.log(msg="INIT Sensor Server correctly ...", level=logging.INFO)
 
+    def _append_status_to_sensor(self, status: SensorStatus):
+        for item in self.sensor_database:
+            if item.id == status.id:
+                item.append_sensor_value(status)
+                return
+        self.log.log(msg=f" No SensorItem found with ID {status.id}. Status not appended.", level=logging.CRITICAL)
 
     async def _sens_rep_responder(self):
         while True:
@@ -56,11 +62,11 @@ class SensorServer:
             self.sensor_comJoin_structure.ParseFromString(message)
 
             self.log.log(msg=f"[CONNECT_REQ] Received Sensor request to connect. "
-                            f"Type: {conv_sensor_type_enum_2_str(self.sensor_comJoin_structure.type)}"
-                            f", Sample_Frequency: {self.sensor_comJoin_structure.sample_freq}", level=logging.INFO)
-            new_sensor = SensorData(id=self.new_sensor_id, sample_freq=self.sensor_comJoin_structure.sample_freq,
-                                   type=self.sensor_comJoin_structure.type)
-            self.sensor_values.append(new_sensor)
+                             f"Type: {conv_sensor_type_enum_2_str(self.sensor_comJoin_structure.type)}"
+                             f", Sample_Frequency: {self.sensor_comJoin_structure.sample_freq}", level=logging.INFO)
+            new_sensor = SensorItem(ident=self.new_sensor_id, sample_freq=self.sensor_comJoin_structure.sample_freq,
+                                    type=conv_sensor_type_enum_2_str(self.sensor_comJoin_structure.type))
+            self.sensor_database.append(new_sensor)
             time.sleep(0.5)
             self.sensor_comJoinResp_structure.sensor_id = self.new_sensor_id
 
@@ -83,7 +89,7 @@ class SensorServer:
             if self.ctrl_request_structure.request_id == system_msg.request_id.GET_SENSOR_COUNT:
 
                 self.ctrl_response_structure.request_id = self.ctrl_request_structure.request_id
-                self.ctrl_response_structure.value_1 = len(self.sensor) #TODO get length of sensor list
+                self.ctrl_response_structure.value_1 = len(self.sensor_database)
                 self.log.log(msg=f"[CTRL_RESP] Sending response: number of sensors {self.ctrl_response_structure.value_1}",
                     level=logging.INFO)
 
@@ -94,13 +100,11 @@ class SensorServer:
             message = await self.sens_sub_socket.recv()
             self.sensor_data_structure.ParseFromString(message)
             data = self.sensor_data_structure
-            self.log.log(msg=f"[DATA_TRANSFER] Received Sensor Data of ID {data.id}: "
-                             f"TimeStamp: {dt.fromtimestamp(data.timestamp / 100)} ({data.timestamp}), "
-                             f"Factor: {data.factor}, Offset: {data.offset}, "
-                             f"signal_value: {data.sig_value} - "
-                             f"{(conv_sig_value(factor=data.factor/100, offset=data.offset/100, value=data.sig_value)):.2f} "
-                             f"{conv_sensor_sig_unit_enum_2_str(data.sig_unit)}", level=logging.INFO)
-            #TODO save data
+            tmp_sensor_status = SensorStatus(timestamp=data.timestamp, id=data.id, factor=data.factor, offset=data.offset,
+                               sig_value=data.sig_value, sig_unit=data.sig_unit)
+            self._append_status_to_sensor(status=tmp_sensor_status)
+            self.log.log(msg=f"[DATA_TRANSFER] Received Sensor Data of {tmp_sensor_status}", level=logging.INFO)
+
 
     async def run_server(self):
         self.log.log(msg="[SERVER] Sensor Server running ...", level=logging.INFO)

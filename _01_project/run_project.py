@@ -109,6 +109,7 @@ class sim_control:
 
     def _remove_sensor_of_system(self):
         print("Running - Remove Sensor of System...")
+
         self._get_validated_input(prompt=f"Sensor ID to delete:): ",min_value= 1, max_value= len())
         input("Press Enter to return to the menu.")
 
