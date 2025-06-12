@@ -50,5 +50,9 @@ class Logger:
         # Get the current thread's name directly
         if level == logging.DEBUG:
             self.logger.debug(msg)
+        elif level == logging.ERROR:
+            self.logger.error(msg)
+        elif level == logging.WARNING:
+            self.logger.warning(msg)
         else:
             self.logger.info(msg)

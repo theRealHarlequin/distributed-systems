@@ -35,7 +35,8 @@ class sim_control:
         self.ctrl_resp_structure = system_msg.RSDBI_resp()
 
         self.menu_options = [("Add new sensor to the control system.", self._add_sensor_to_system),
-                             ("Remove sensor from the control system.", self._remove_sensor_of_system),
+                             ("Unsubscripe sensor from the control system.", self._unsubscripe_sensor),
+                             ("Subscripe sensor from the control system.", self._subscripe_sensor),
                              ("Change the threshold value.", self._change_threshold_value),
                              ("Exit / Close Simulation.", self._exit_program)]
 
@@ -113,17 +114,30 @@ class sim_control:
         print("")
         input("Press Enter to return to the menu.")
 
-    def _remove_sensor_of_system(self):
-        print("Running - Remove Sensor of System -> request max sensor id...")
-        max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
-        id_2_remove = self._get_validated_input(prompt=f"Sensor ID to delete ({1}->{max_sensor_id}): ",
+    def _unsubscripe_sensor(self):
+        print("Running - Unsubscripe Sensor...")
+        #max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
+        id_2_unsub = self._get_validated_input(prompt=f"Sensor ID to unsubscripe : ", #({1}->{max_sensor_id})
                                   min_value= 1,
-                                  max_value= max_sensor_id if max_sensor_id is not None else 1000)
-        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_remove)
+                                  max_value= 100 )#max_sensor_id if max_sensor_id is not None else 1000)
+        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_unsub)
         if status:
-            print(f"Removed Sensor with ID: {id_2_remove} form System.")
+            print(f"Unsubsciption of Sensor with ID: {id_2_unsub}.")
         else:
-            print(f"Sensor with ID: {id_2_remove} did not exist in system.")
+            print(f"Sensor with ID {id_2_unsub} is not part of the system anymore.")
+        input("Press Enter to return to the menu.")
+
+    def _subscripe_sensor(self):
+        print("Running - Subscripe Sensor...")
+        #max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
+        id_2_sub = self._get_validated_input(prompt=f"Sensor ID to subscripe : ", #({1}->{max_sensor_id})
+                                  min_value= 1,
+                                  max_value= 100 )#max_sensor_id if max_sensor_id is not None else 1000)
+        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_sub)
+        if status:
+            print(f"Unsubsciption of Sensor with ID: {id_2_sub}.")
+        else:
+            print(f"Sensor with ID {id_2_sub} is not part of the system anymore.")
         input("Press Enter to return to the menu.")
 
     def _change_threshold_value(self):
@@ -161,7 +175,7 @@ class sim_control:
             else:
                 return None
 
-        elif req_id == system_msg.request_id.SET_DELETE_SENSOR:
+        elif req_id == system_msg.request_id.UNSUBSCRIBE_SENSOR_ID:
             # Send Request
             self.ctrl_req_structure.value_0 = value_0
             self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
@@ -174,6 +188,21 @@ class sim_control:
                 return 1
             else:
                 return None
+
+        elif req_id == system_msg.request_id.SUBSCRIBE_SENSOR_ID:
+            # Send Request
+            self.ctrl_req_structure.value_0 = value_0
+            self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
+
+            # Receive Response
+            message = self.ctrl_req_socket.recv()
+            self.ctrl_resp_structure.ParseFromString(message)
+
+            if (self.ctrl_resp_structure.id == req_id and self.ctrl_resp_structure.value_0 == value_0 and self.ctrl_resp_structure.value_1 == 1):
+                return 1
+            else:
+                return None
+
         elif req_id == system_msg.request_id.GET_ALERT_THRESHOLD:
             pass
         elif req_id == system_msg.request_id.SET_ALERT_THRESHOLD:

@@ -70,8 +70,8 @@ class SensorServer:
             self.sensor_database.append(new_sensor)
             time.sleep(0.5)
             self.sensor_comJoinResp_structure.sensor_id = self.new_sensor_id
-            self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, f"sensor_{self.new_sensor_id}")
-            self._active_subscriptions.add(f"sensor_{self.new_sensor_id}")
+            self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, str(self.new_sensor_id))
+            self._active_subscriptions.add(str(self.new_sensor_id))
 
             #  Send reply back to client
             self.log.log(msg=f"[CONNECT_REQ] Sending response: Sensor registration ID: {self.sensor_comJoinResp_structure.sensor_id}",
@@ -103,8 +103,16 @@ class SensorServer:
                 self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
                 self.ctrl_response_structure.value_1 = 1
 
-                self.sens_sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, f"sensor_{self.ctrl_request_structure.value_0}")
-                self._active_subscriptions.discard(f"sensor_{self.ctrl_request_structure.value_0}")
+                if str(self.ctrl_request_structure.value_0) in self._active_subscriptions:
+                    self.sens_sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, str(self.ctrl_request_structure.value_0))
+                    self._active_subscriptions.discard(str(self.ctrl_request_structure.value_0))
+                    self.log.log(
+                        msg=f"[UNSUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} has been unsubscribed",
+                        level=logging.INFO)
+                else:
+                    self.log.log(
+                        msg=f"[UNSUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} no sensor with this id is registrated",
+                        level=logging.ERROR)
 
                 time.sleep(10)
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
@@ -113,9 +121,9 @@ class SensorServer:
                 self.ctrl_response_structure.id = self.ctrl_request_structure.id
                 self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
                 self.ctrl_response_structure.value_1 = 1
-
-                self.sens_sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, f"sensor_{self.ctrl_request_structure.value_0}")
-                self._active_subscriptions.discard(f"sensor_{self.ctrl_request_structure.value_0}")
+                if str(self.ctrl_request_structure.value_0) not in self._active_subscriptions:
+                    self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, str(self.ctrl_request_structure.value_0))
+                    self._active_subscriptions.add(str(self.ctrl_request_structure.value_0))
 
                 time.sleep(10)
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
