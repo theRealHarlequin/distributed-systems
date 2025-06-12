@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14system_message.proto\"\xa7\x01\n\x04RDBI\x12\x17\n\x02id\x18\x01 \x01(\x0e\x32\x0b.request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"\xac\x01\n\tRDBI_resp\x12\x17\n\x02id\x18\x01 \x01(\x0e\x32\x0b.request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r*g\n\nrequest_id\x12\x14\n\x10GET_SENSOR_COUNT\x10\x00\x12\x17\n\x13GET_ALERT_THRESHOLD\x10\x01\x12\x17\n\x13SET_ALERT_THRESHOLD\x10\x02\x12\x11\n\rDISPLAY_GRAPH\x10\x04\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14system_message.proto\"\xa8\x01\n\x05RSDBI\x12\x17\n\x02id\x18\x01 \x01(\x0e\x32\x0b.request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"\xad\x01\n\nRSDBI_resp\x12\x17\n\x02id\x18\x01 \x01(\x0e\x32\x0b.request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r*\x9c\x01\n\nrequest_id\x12\x15\n\x11GET_SENSOR_MAX_ID\x10\x00\x12\x19\n\x15UNSUBSCRIBE_SENSOR_ID\x10\x01\x12\x17\n\x13SUBSCRIBE_SENSOR_ID\x10\x02\x12\x17\n\x13GET_ALERT_THRESHOLD\x10\x03\x12\x17\n\x13SET_ALERT_THRESHOLD\x10\x04\x12\x11\n\rDISPLAY_GRAPH\x10\x05\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -21,10 +21,10 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'system_message_pb2', _globa
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _globals['_REQUEST_ID']._serialized_start=369
-  _globals['_REQUEST_ID']._serialized_end=472
-  _globals['_RDBI']._serialized_start=25
-  _globals['_RDBI']._serialized_end=192
-  _globals['_RDBI_RESP']._serialized_start=195
-  _globals['_RDBI_RESP']._serialized_end=367
+  _globals['_REQUEST_ID']._serialized_start=372
+  _globals['_REQUEST_ID']._serialized_end=528
+  _globals['_RSDBI']._serialized_start=25
+  _globals['_RSDBI']._serialized_end=193
+  _globals['_RSDBI_RESP']._serialized_start=196
+  _globals['_RSDBI_RESP']._serialized_end=369
 # @@protoc_insertion_point(module_scope)

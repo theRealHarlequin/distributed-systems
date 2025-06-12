@@ -32,8 +32,12 @@ def conv_sensor_type_enum_2_str(enum_value: enum):
 
 def conv_ctrl_type_enum_2_str(enum_value: enum):
     system = ""
-    if enum_value == system_msg.request_id.GET_SENSOR_COUNT:
-        system = "number of Sensors"
+    if enum_value == system_msg.request_id.GET_SENSOR_MAX_ID:
+        system = "number of sensors"
+    elif enum_value == system_msg.request_id.UNSUBSCRIBE_SENSOR_ID:
+        system = "unsubscripe sensor"
+    elif enum_value == system_msg.request_id.SUBSCRIBE_SENSOR_ID:
+        system = "subscripe new sensor"
     elif enum_value == system_msg.request_id.GET_ALERT_THRESHOLD:
         system = "get current threshold of sensor"
     elif enum_value == system_msg.request_id.SET_ALERT_THRESHOLD:

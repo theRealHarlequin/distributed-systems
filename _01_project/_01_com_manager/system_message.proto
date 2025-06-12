@@ -2,13 +2,15 @@ syntax = "proto3";
 
 
 enum request_id {
-	GET_SENSOR_COUNT = 0;
-	GET_ALERT_THRESHOLD = 1;
-	SET_ALERT_THRESHOLD = 2;
-	DISPLAY_GRAPH = 4;
+	GET_SENSOR_MAX_ID = 0;
+	UNSUBSCRIBE_SENSOR_ID = 1;
+	SUBSCRIBE_SENSOR_ID = 2;
+	GET_ALERT_THRESHOLD = 3;
+	SET_ALERT_THRESHOLD = 4;
+	DISPLAY_GRAPH = 5;
 }
 
-message RDBI {
+message RSDBI {
 	request_id id = 1;
 	uint32 value_0 =2;
 	uint32 value_1 =3;
@@ -20,7 +22,7 @@ message RDBI {
 	uint32 value_7 =9;
 }
 
-message RDBI_resp {
+message RSDBI_resp {
 	request_id id = 1;
 	uint32 value_0 =2;
 	uint32 value_1 =3;

@@ -1,8 +1,7 @@
-import logging
-import subprocess
+import logging, zmq, zmq.asyncio, asyncio, os, subprocess, time
 from _99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
 from _02_data_source import sensor_message_pb2 as sensor_msg
-import os
+from _01_project._01_com_manager import system_message_pb2 as system_msg
 from logger import Logger
 
 # Get the directory of the current script
@@ -27,6 +26,13 @@ class sim_control:
 
         self.log.log(msg="init_env", level=logging.INFO)
         self.run_in_new_console = True
+
+        self.ctx_req = zmq.Context()
+        self.ctrl_req_socket = self.ctx_req.socket(zmq.REQ)
+        self.ctrl_req_socket.connect("tcp://localhost:5552")
+
+        self.ctrl_req_structure = system_msg.RSDBI()
+        self.ctrl_resp_structure = system_msg.RSDBI_resp()
 
         self.menu_options = [("Add new sensor to the control system.", self._add_sensor_to_system),
                              ("Remove sensor from the control system.", self._remove_sensor_of_system),
@@ -60,7 +66,7 @@ class sim_control:
                 print("Input must be an integer.")
 
 
-    def clear_console(self):
+    def _clear_console(self):
         """Clear the console output."""
         os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -108,9 +114,16 @@ class sim_control:
         input("Press Enter to return to the menu.")
 
     def _remove_sensor_of_system(self):
-        print("Running - Remove Sensor of System...")
-
-        self._get_validated_input(prompt=f"Sensor ID to delete:): ",min_value= 1, max_value= len())
+        print("Running - Remove Sensor of System -> request max sensor id...")
+        max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
+        id_2_remove = self._get_validated_input(prompt=f"Sensor ID to delete ({1}->{max_sensor_id}): ",
+                                  min_value= 1,
+                                  max_value= max_sensor_id if max_sensor_id is not None else 1000)
+        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_remove)
+        if status:
+            print(f"Removed Sensor with ID: {id_2_remove} form System.")
+        else:
+            print(f"Sensor with ID: {id_2_remove} did not exist in system.")
         input("Press Enter to return to the menu.")
 
     def _change_threshold_value(self):
@@ -124,6 +137,51 @@ class sim_control:
             p.terminate()
         exit()
 
+    def _control_communication(self, req_id: system_msg.request_id, value_0: int=0, value_1: int=0, value_2: int=0, value_3: int=0,
+                                     value_4: int=0, value_5: int=0, value_6: int=0, value_7: int=0):
+        self.ctrl_req_structure.id = req_id
+        self.ctrl_req_structure.value_0 = 0
+        self.ctrl_req_structure.value_1 = 0
+        self.ctrl_req_structure.value_2 = 0
+        self.ctrl_req_structure.value_3 = 0
+        self.ctrl_req_structure.value_4 = 0
+        self.ctrl_req_structure.value_5 = 0
+        self.ctrl_req_structure.value_6 = 0
+        self.ctrl_req_structure.value_7 = 0
+        if req_id == system_msg.request_id.GET_SENSOR_MAX_ID:
+            # Send Request
+            self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
+
+            # Receive Response
+            message = self.ctrl_req_socket.recv()
+            self.ctrl_resp_structure.ParseFromString(message)
+
+            if self.ctrl_resp_structure.id == req_id:
+                return self.ctrl_resp_structure.value_0
+            else:
+                return None
+
+        elif req_id == system_msg.request_id.SET_DELETE_SENSOR:
+            # Send Request
+            self.ctrl_req_structure.value_0 = value_0
+            self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
+
+            # Receive Response
+            message = self.ctrl_req_socket.recv()
+            self.ctrl_resp_structure.ParseFromString(message)
+
+            if (self.ctrl_resp_structure.id == req_id and self.ctrl_resp_structure.value_0 == value_0 and self.ctrl_resp_structure.value_1 == 1):
+                return 1
+            else:
+                return None
+        elif req_id == system_msg.request_id.GET_ALERT_THRESHOLD:
+            pass
+        elif req_id == system_msg.request_id.SET_ALERT_THRESHOLD:
+            pass
+        elif req_id == system_msg.request_id.DISPLAY_GRAPH:
+            pass
+        self.ctrl_req_socket.send(self.ctrl_resp_structure.SerializeToString())
+
     def main_menu(self):
         """Display the main menu and handle user input."""
         # --------------- start Servers ---------------
@@ -132,7 +190,7 @@ class sim_control:
 
         # start loop
         while True:
-            self.clear_console()
+            self._clear_console()
             print("=== Main Menu ===")
             for idx, (option_text, _) in enumerate(self.menu_options, start=1):
                 print(f"{idx}. {option_text}")
@@ -142,7 +200,7 @@ class sim_control:
             if choice.isdigit():
                 choice_num = int(choice)
                 if 1 <= choice_num <= len(self.menu_options):
-                    self.clear_console()
+                    self._clear_console()
                     _, selected_function = self.menu_options[choice_num - 1]
                     selected_function()
                 else:

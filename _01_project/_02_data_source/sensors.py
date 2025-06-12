@@ -99,7 +99,7 @@ class Sensor(ABC):
         self.sensor_data_msg.sig_unit = self.unit
         self.sensor_data_msg.sig_value = self.value
 
-        self.pub_socket.send(self.sensor_data_msg.SerializeToString())
+        self.pub_socket.send(str(self.sensor_data_msg.id).encode() + b" " + self.sensor_data_msg.SerializeToString())
 
     async def start(self):
         # Connect first
