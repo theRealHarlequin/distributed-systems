@@ -1,5 +1,5 @@
 import time, logging, argparse
-from typing import List, Set
+from typing import List, Set, cast
 from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_ctrl_type_enum_2_str
 from logger import Logger
 from _01_project._02_data_source import sensor_message_pb2 as sensor_msg
@@ -20,18 +20,21 @@ class SensorServer:
         # Init Connection
         self.ctx_sub = zmq.asyncio.Context()
         self.ctx_req = zmq.asyncio.Context()
+        self.ctx_req_ctr = zmq.asyncio.Context()
+        self.ctx_push = zmq.asyncio.Context()
 
         self.sens_sub_socket = self.ctx_sub.socket(zmq.SUB)
         self.sens_sub_socket.bind("tcp://*:5550")
         self._active_subscriptions: Set[str] = set()
-        #self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
         self.sens_rep_socket = self.ctx_req.socket(zmq.REP)
         self.sens_rep_socket.bind("tcp://*:5551")
 
-        self.ctrl_rep_socket = self.ctx_req.socket(zmq.REP)
+        self.ctrl_rep_socket = self.ctx_req_ctr.socket(zmq.REP)
         self.ctrl_rep_socket.bind("tcp://*:5552")
-        #self.socket_data_transf = None
+
+        self.data_push_socket = self.ctx_push.socket(zmq.PUSH)
+        self.data_push_socket.connect("tcp://localhost:5553")
 
         # Init Messages
         self.sensor_comJoin_structure = sensor_msg.ComJoin()
@@ -39,9 +42,10 @@ class SensorServer:
         self.sensor_data_structure = sensor_msg.SensorStatus()
         self.ctrl_request_structure = system_msg.RSDBI()
         self.ctrl_response_structure = system_msg.RSDBI_resp()
+        self.data_structure = sensor_msg.SensorStatus()
 
         # Attributes:
-        self.sensor_database: List[SensorItem] = []
+        self.push_send_output: List[SensorStatus] = []
         self.new_sensor_id = 1
 
         self.log.log(msg="INIT Sensor Server correctly ...", level=logging.INFO)
@@ -53,6 +57,9 @@ class SensorServer:
                 return
         self.log.log(msg=f"[UNREGISTERED SENSOR] No SensorItem found with ID {status.id}. Status not appended.", level=logging.ERROR)
 
+    def _append_status_buffer(self, status: SensorStatus):
+        self.push_send_output.append(status)
+
     async def _sens_rep_responder(self):
         while True:
             # Wait for next request from client
@@ -62,10 +69,11 @@ class SensorServer:
             self.log.log(msg=f"[CONNECT_REQ] Received Sensor request to connect. "
                              f"Type: {conv_sensor_type_enum_2_str(self.sensor_comJoin_structure.type)}"
                              f", Sample_Frequency: {self.sensor_comJoin_structure.sample_freq}", level=logging.INFO)
-            new_sensor = SensorItem(ident=self.new_sensor_id, sample_freq=self.sensor_comJoin_structure.sample_freq,
-                                    type=conv_sensor_type_enum_2_str(self.sensor_comJoin_structure.type))
-            self.sensor_database.append(new_sensor)
-            time.sleep(0.5)
+            sens_reg = self.sensor_comJoin_structure
+            sens_reg.connect = self.new_sensor_id
+            await self.data_push_socket.send("1".encode() + b" " + sens_reg.SerializeToString())
+
+            # send response to Sensor
             self.sensor_comJoinResp_structure.sensor_id = self.new_sensor_id
             self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, str(self.new_sensor_id))
             self._active_subscriptions.add(str(self.new_sensor_id))
@@ -111,7 +119,6 @@ class SensorServer:
                         msg=f"[UNSUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} no sensor with this id is registrated",
                         level=logging.ERROR)
 
-                time.sleep(10)
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
             elif self.ctrl_request_structure.id == system_msg.request_id.SUBSCRIBE_SENSOR_ID:
@@ -121,10 +128,14 @@ class SensorServer:
                 if str(self.ctrl_request_structure.value_0) not in self._active_subscriptions:
                     self.sens_sub_socket.setsockopt_string(zmq.SUBSCRIBE, str(self.ctrl_request_structure.value_0))
                     self._active_subscriptions.add(str(self.ctrl_request_structure.value_0))
+                    self.log.log(msg=f"[SUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} has been resubscribed.",
+                        level=logging.INFO)
+                else:
+                    self.log.log(
+                        msg=f"[SUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} is already subscribed by the system.",
+                        level=logging.ERROR)
 
-                time.sleep(10)
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
-
 
     async def _sub_listener(self):
         while True:
@@ -135,13 +146,30 @@ class SensorServer:
             data = self.sensor_data_structure
             tmp_sensor_status = SensorStatus(timestamp=data.timestamp, id=data.id, factor=data.factor, offset=data.offset,
                                sig_value=data.sig_value, sig_unit=data.sig_unit)
-            self._append_status_to_sensor(status=tmp_sensor_status)
+
+            self._append_status_buffer(status=tmp_sensor_status)
             self.log.log(msg=f"[DATA_TRANSFER] Received Sensor Data of {tmp_sensor_status}", level=logging.INFO)
 
+    async def _push_data(self):
+        while True:
+            await asyncio.sleep(2)
+            tmp_lst: List[SensorStatus] = self.push_send_output[:]
+            self.push_send_output.clear()
+            for itm in tmp_lst:
+                self.data_structure.id = itm.id
+                self.data_structure.timestamp = itm.timestamp
+                self.data_structure.sig_value = itm.sig_value
+                self.data_structure.factor = itm.factor
+                self.data_structure.offset = itm.offset
+                self.data_structure.sig_unit = itm.sig_unit
+
+                await self.data_push_socket.send("2".encode() + b" " + self.data_structure.SerializeToString())
+                self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
 
     async def run_server(self):
         self.log.log(msg="[SERVER] Sensor Server running ...", level=logging.INFO)
         await asyncio.gather(
+            self._push_data(),
             self._sub_listener(),
             self._sens_rep_responder(),
             self._ctrl_rep_responder()

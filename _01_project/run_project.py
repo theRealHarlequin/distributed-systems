@@ -35,8 +35,8 @@ class sim_control:
         self.ctrl_resp_structure = system_msg.RSDBI_resp()
 
         self.menu_options = [("Add new sensor to the control system.", self._add_sensor_to_system),
-                             ("Unsubscribe sensor from the control system.", self._unsubscripe_sensor),
-                             ("Subscribe sensor from the control system.", self._subscripe_sensor),
+                             ("Unsubscribe sensor from the control system.", self._unsubscribe_sensor),
+                             ("Subscribe sensor from the control system.", self._subscribe_sensor),
                              ("Change the threshold value.", self._change_threshold_value),
                              ("Exit / Close Simulation.", self._exit_program)]
 
@@ -77,7 +77,7 @@ class sim_control:
         sensor_type_dict = get_all_sensor_var()
         sensor_list_str=""
         for key in get_all_sensor_var():
-            sensor_list_str += f"    {key} -> {sensor_type_dict[key]} -"
+            sensor_list_str += f" {key} -> {sensor_type_dict[key]} |"
         print(f"Select Sensor Type: {sensor_list_str}")
 
         inp_sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (0-2): ",
@@ -114,12 +114,9 @@ class sim_control:
         print("")
         input("Press Enter to return to the menu.")
 
-    def _unsubscripe_sensor(self):
-        print("Running - Unsubscripe Sensor...")
-        #max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
-        id_2_unsub = self._get_validated_input(prompt=f"Sensor ID to unsubscripe : ", #({1}->{max_sensor_id})
-                                  min_value= 1,
-                                  max_value= 100 )#max_sensor_id if max_sensor_id is not None else 1000)
+    def _unsubscribe_sensor(self):
+        print("Running - Unsubscribe Sensor...")
+        id_2_unsub = self._get_validated_input(prompt=f"Sensor ID to unsubscribe : ", min_value=1, max_value=100)
         status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_unsub)
         if status:
             print(f"Unsubsciption of Sensor with ID: {id_2_unsub}.")
@@ -127,17 +124,14 @@ class sim_control:
             print(f"Sensor with ID {id_2_unsub} is not part of the system anymore.")
         input("Press Enter to return to the menu.")
 
-    def _subscripe_sensor(self):
-        print("Running - Subscripe Sensor...")
-        #max_sensor_id = self._control_communication(req_id=system_msg.request_id.GET_SENSOR_MAX_ID)
-        id_2_sub = self._get_validated_input(prompt=f"Sensor ID to subscripe : ", #({1}->{max_sensor_id})
-                                  min_value= 1,
-                                  max_value= 100 )#max_sensor_id if max_sensor_id is not None else 1000)
-        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_sub)
+    def _subscribe_sensor(self):
+        print("Running - subscribe Sensor...")
+        id_2_sub = self._get_validated_input(prompt=f"Sensor ID to subscribe : ", min_value=1, max_value=100)
+        status = self._control_communication(req_id=system_msg.request_id.SUBSCRIBE_SENSOR_ID, value_0=id_2_sub)
         if status:
-            print(f"Unsubsciption of Sensor with ID: {id_2_sub}.")
+            print(f"Subscibtion of Sensor with ID: {id_2_sub}.")
         else:
-            print(f"Sensor with ID {id_2_sub} is not part of the system anymore.")
+            print(f"Sensor with ID {id_2_sub} can not be subscibted.")
         input("Press Enter to return to the menu.")
 
     def _change_threshold_value(self):
@@ -213,9 +207,9 @@ class sim_control:
 
     def main_menu(self):
         """Display the main menu and handle user input."""
-        # --------------- start Servers ---------------
-        # start Sensor Server
-        self.start_new_subprocess(script="_01_com_manager/sensor_server_socket.py")
+        # start Server
+        self.start_new_subprocess(script="_04_data_analyse/analyse_server.py")
+        self.start_new_subprocess(script="_01_com_manager/sensor_server.py")
 
         # start loop
         while True:
