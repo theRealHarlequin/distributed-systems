@@ -9,14 +9,14 @@ class Logger:
     _instance = None
     _lock = threading.Lock()
 
-    def __new__(cls):
+    def __new__(cls, external_log_file=None, sub_proc_name: str="_PROCESS"):
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
-                cls._instance._initialize()
+                cls._instance._initialize(external_log_file=external_log_file, sub_proc_name=sub_proc_name)
             return cls._instance
 
-    def _initialize(self, external_log_file=None):
+    def _initialize(self, external_log_file=None, sub_proc_name: str="_PROCESS"):
         if hasattr(self, 'logger'):
             return  # Avoid reinitializing
 
@@ -28,9 +28,9 @@ class Logger:
         self.logger = logging.getLogger(f"ThreadSafeLogger_{id(self)}")
         self.logger.setLevel(logging.DEBUG)
 
-        file_formatter = logging.Formatter("%(asctime)s - [%(levelname)s][%(threadName)s]: %(message)s",
+        file_formatter = logging.Formatter(f"%(asctime)s - [%(levelname)s][{sub_proc_name}]: %(message)s",
                                            datefmt='%Y-%m-%d %H:%M:%S')
-        console_formatter = logging.Formatter("%(asctime)s - [%(levelname)s][%(threadName)s]: %(message)s",
+        console_formatter = logging.Formatter(f"%(asctime)s - [%(levelname)s][{sub_proc_name}]: %(message)s",
                                               datefmt='%Y-%m-%d %H:%M:%S')
 
         file_handler = logging.FileHandler(log_file)

@@ -35,14 +35,14 @@ class sim_control:
         self.ctrl_resp_structure = system_msg.RSDBI_resp()
 
         self.menu_options = [("Add new sensor to the control system.", self._add_sensor_to_system),
-                             ("Unsubscripe sensor from the control system.", self._unsubscripe_sensor),
-                             ("Subscripe sensor from the control system.", self._subscripe_sensor),
+                             ("Unsubscribe sensor from the control system.", self._unsubscripe_sensor),
+                             ("Subscribe sensor from the control system.", self._subscripe_sensor),
                              ("Change the threshold value.", self._change_threshold_value),
                              ("Exit / Close Simulation.", self._exit_program)]
 
     def start_new_subprocess(self, script:str):
         script_path = os.path.join(current_dir, script)  # Ensure correct path
-        log.log(msg=f"start_process of {script} at {script_path}", level=logging.INFO)
+        log.log(msg=f"[SUBPROCESS] Starting: {script} at {script_path}", level=logging.INFO)
         if run_in_new_console:
             p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
                                  start_new_session=True, creationflags=subprocess.CREATE_NEW_CONSOLE )

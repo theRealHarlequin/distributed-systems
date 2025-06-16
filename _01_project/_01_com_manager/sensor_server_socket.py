@@ -15,9 +15,7 @@ class SensorServer:
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
         # Init Logger
-        self.log = Logger()
-        if log_file_path:
-            self.log._initialize(log_file_path)
+        self.log = Logger(external_log_file=log_file_path, sub_proc_name="SENSOR_SERVER")
 
         # Init Connection
         self.ctx_sub = zmq.asyncio.Context()
@@ -33,7 +31,6 @@ class SensorServer:
 
         self.ctrl_rep_socket = self.ctx_req.socket(zmq.REP)
         self.ctrl_rep_socket.bind("tcp://*:5552")
-
         #self.socket_data_transf = None
 
         # Init Messages
@@ -155,12 +152,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Verarbeitet Log-Dateien aus einem angegebenen Verzeichnis.")
 
     # Argument für das Log-Verzeichnis hinzufügen
-    parser.add_argument(
-        '--log-dir',
-        type=str,
-        required=True,  # Muss angegeben werden
-        help="Der Pfad zum Verzeichnis, das die Log-Dateien enthält."
-    )
+    parser.add_argument('--log-dir', type=str, required=True, help="The path contains the log directory.")
 
     # Argumente parsen
     args = parser.parse_args()
@@ -168,5 +160,5 @@ def parse_args():
 
 if __name__ == "__main__":
     log_dir = parse_args()
-    sensor_server = SensorServer(log_file_path=log_dir)
+    sensor_server = SensorServer(log_file_path=log_dir, )
     asyncio.run(sensor_server.run_server())

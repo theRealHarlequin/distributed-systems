@@ -43,27 +43,25 @@ class Sensor(ABC):
         self.sensor_data_msg = sensor_msg.SensorStatus()
 
         ## Init Logger
-        self.log = Logger()
-        if log_file_path:
-            self.log._initialize(log_file_path)
+        self.log = Logger(external_log_file=log_file_path, sub_proc_name="SENSOR")
         self.log.log(msg=f"Init new Sensor of type [{conv_sensor_type_enum_2_str(sensor_type)}]", level=logging.INFO)
 
     async def _connect(self):
         """Simulate connecting the sensor."""
 
         #  Socket to talk to server
-        self.log.log(msg=f"[Sensor_Client] Start Connection to Sensor Server ...", level=logging.INFO)
+        self.log.log(msg=f"[Client] Start Connection to Sensor Server ...", level=logging.INFO)
 
         self.sensor_comJoin_msg.connect = 1
         self.sensor_comJoin_msg.type = self.type
         self.sensor_comJoin_msg.sample_freq = self._sample_freq
-        self.log.log(msg=f"[Sensor_Client] Sending request: Communication Join", level=logging.INFO)
+        self.log.log(msg=f"[Client] Sending request: Communication Join", level=logging.INFO)
         self.req_socket.send(self.sensor_comJoin_msg.SerializeToString())
 
         #  Get the reply.
         message = await self.req_socket.recv()
         self.sensor_comJoinResp_msg.ParseFromString(message)
-        self.log.log(msg=f"[Sensor_Client] Received response: Sensor ID - {self.sensor_comJoinResp_msg.sensor_id}",
+        self.log.log(msg=f"[Client] Received response: Sensor ID - {self.sensor_comJoinResp_msg.sensor_id}",
                      level=logging.INFO)
         self.connected = True
         self.id = self.sensor_comJoinResp_msg.sensor_id
