@@ -1,7 +1,7 @@
 import logging, argparse
 from typing import List
 from logger import Logger
-from _01_project._99_helper.helper import conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str
+from _01_project._99_helper.helper import conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str, conv_sensor_type_str_2_enum
 from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
 from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
@@ -16,13 +16,20 @@ class AnalyseServer:
 
         # Init Connection
         self.ctx_pull = zmq.asyncio.Context()
+        self.ctx_push = zmq.asyncio.Context()
 
         self.pull_socket = self.ctx_pull.socket(zmq.PULL)
         self.pull_socket.bind("tcp://*:5553")
 
+        self.disp_push_socket = self.ctx_push.socket(zmq.PUSH)
+        self.disp_push_socket.connect("tcp://localhost:5554")
+
+
         # Init Messages
         self.data_transfer_structure = nc_msg.sens_status()
         self.sens_reg_structure = nc_msg.sens_com_join()
+        self.disp_disp_numb_sensor = nc_msg.disp_numb_sensor()
+        self.disp_disp_sensor_status = nc_msg.disp_sensor_status()
 
         # Attributes:
         self.sensor_database: List[SensorItem] = []
@@ -47,17 +54,42 @@ class AnalyseServer:
                 data = self.data_transfer_structure
                 tmp_status = SensorStatus(timestamp=data.timestamp, id=data.id, factor=data.factor, offset=data.offset,
                                                  sig_value=data.sig_value, sig_unit=data.sig_unit)
+
                 self.log.log(msg=f"[DATA_TRANS] Received Sensor Data -- "
                                  f"Time: {tmp_status.timestamp} - Sensor ID: Sensor {tmp_status.id} - "
                                  f"Value: {conv_sig_value(value=tmp_status.sig_value, factor= tmp_status.factor, offset=tmp_status.offset) }"
                                  f" {conv_sensor_sig_unit_enum_2_str(tmp_status.sig_unit)}", level=logging.INFO)
 
-                self._append_status_to_sensor(status=tmp_status)
+                self._append_status_to_sensor(status=tmp_status, active=1 if data.active == 1 else 0)
 
-    def _append_status_to_sensor(self, status: SensorStatus):
+    async def _display_push_data(self):
+        while True:
+            await asyncio.sleep(1)
+            tmp_sensor_cnt = len(self.sensor_database)
+            if tmp_sensor_cnt > 1:
+                for sensor in self.sensor_database:
+                    data = sensor.data[-1]
+                    self.disp_disp_sensor_status.sensor_id = sensor.id
+                    self.disp_disp_sensor_status.sample_freq = sensor.sample_freq
+                    self.disp_disp_sensor_status.type = conv_sensor_type_str_2_enum(sensor.type)
+                    self.disp_disp_sensor_status.active = sensor.active
+                    self.disp_disp_sensor_status.timestamp = data.timestamp
+                    self.disp_disp_sensor_status.sig_value = data.sig_value
+                    self.disp_disp_sensor_status.factor = data.factor
+                    self.disp_disp_sensor_status.offset = data.offset
+                    self.disp_disp_sensor_status.sig_unit = data.sig_unit #Todo Revert Fucntion
+                    self.disp_disp_sensor_status.lower_threshold = 0#sensor.lower_threshold
+                    self.disp_disp_sensor_status.upper_threshold = 0#sensor.upper_threshold
+                    self.disp_disp_sensor_status.threshold_status = 0#data.threshold_status #TODO IF Verzweigung
+
+                await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
+                self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
+
+    def _append_status_to_sensor(self, status: SensorStatus, active):
         for item in self.sensor_database:
             if item.id == status.id:
                 item.append_sensor_value(status)
+                item.set_active(active)
                 return
         self.log.log(msg=f"[UNREGISTERED SENSOR] No SensorItem found with ID {status.id}. Status not appended.", level=logging.ERROR)
 

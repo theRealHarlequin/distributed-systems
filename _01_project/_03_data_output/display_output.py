@@ -1,5 +1,8 @@
 import logging, argparse
-from _01_project._99_helper.helper import conv_sensor_type_enum_2_str
+from typing import List
+from _01_project._00_data_structure.data_structure import StatusDisplayItem
+from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_threshold_status_enum_2_str
+from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
 
 class Display:
@@ -14,21 +17,34 @@ class Display:
         self.ctx_pull = zmq.asyncio.Context()
 
         self.pull_socket = self.ctx_pull.socket(zmq.PULL)
-        self.pull_socket.bind("tcp://*:5553")
+        self.pull_socket.bind("tcp://*:5554")
+
+        # Variables
+        self._display_list:List[StatusDisplayItem] = []
+        self._number_sensors: int = 0
+
+        self.input_disp_numb_sensor = nc_msg.disp_numb_sensor()
+        self.input_disp_sensor_status = nc_msg.disp_sensor_status()
 
     async def _data_pull_responder(self):
         while True:
             # Wait for next request from client
             message = await self.pull_socket.recv()
-            topic, raw_data = message.split(b" ", 1)  # topic: 1 -> Registration Sensor | 2 -> Data
+            topic, raw_data = message.split(b" ", 1)  # topic: 1 -> number of sensors | 2 -> Data
             if topic == b'1':
-                self.sens_reg_structure.ParseFromString(raw_data)
-                data = self.sens_reg_structure
-                new_sensor = SensorItem(ident=data.connect, sample_freq=data.sample_freq, type=conv_sensor_type_enum_2_str(data.type))
-                self.sensor_database.append(new_sensor)
-                self.log.log(msg=f"[NEW_SENSOR] Received Sensor request to connect. "
-                                 f"Type: {conv_sensor_type_enum_2_str(data.type)}"
-                                 f", Sample_Frequency: {data.sample_freq}", level=logging.INFO)
+                self.input_disp_numb_sensor.ParseFromString(raw_data)
+                data = self.input_disp_numb_sensor
+                self._number_sensors = data.number_sensor
+            elif topic == b'2':
+                self.input_disp_sensor_status.ParseFromString(raw_data)
+                data = self.input_disp_sensor_status
+                measured_data = StatusDisplayItem(sensor_id=data.sensor_id, sample_freq=data.sample_freq,
+                                                  type=conv_sensor_type_enum_2_str(data.type),
+                                                  active=data.active, timestamp=data.timestamp, sig_value=data.sig_value,
+                                                  factor=data.factor, offset=data.offset, sig_unit=data.sig_unit,
+                                                  lower_threshold=str(data.lower_threshold) if data.lower_threshold > 0 else "",
+                                                  upper_threshold=str(data.upper_threshold) if data.upper_threshold > 0 else "",
+                                                  threshold_status=conv_threshold_status_enum_2_str(data.threshold_status))
 
     async def run_server(self):
         await asyncio.gather(
@@ -46,5 +62,5 @@ def parse_args():
 
 if __name__ == "__main__":
         log_dir = parse_args()
-        sensor_server = Display()
-        asyncio.run(sensor_server.run_server())
+        display = Display()
+        asyncio.run(display.run_server())

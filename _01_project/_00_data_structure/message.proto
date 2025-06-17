@@ -26,7 +26,14 @@ enum sens_type {
 	TYPE_ROTATION = 2;
 }
 
-// Sensor <-> Sensor Server Communication
+enum disp_threshold_status {
+	NO_EVALUATION = 0;
+	VALUE_INSIDE_AREA = 1;
+	VALUE_TO_HIGH = 2;
+	VALUE_TO_LOW = 3;
+}
+
+// Sensor -> Sensor Server -> Analyse Sensor Com
 message sens_status {
 	uint64 timestamp = 1;
 	uint32 id = 2;
@@ -34,6 +41,7 @@ message sens_status {
 	uint32 factor = 4;
 	uint32 offset = 5;
 	sens_signal_unit sig_unit = 6;
+	uint32 active = 7;
 }
 
 message sens_com_join{
@@ -86,4 +94,7 @@ message disp_sensor_status {
 	uint32 factor = 7;
 	uint32 offset = 8;
 	sens_signal_unit sig_unit = 9;
+	uint32 lower_threshold = 10;
+	uint32 upper_threshold = 11;
+	disp_threshold_status threshold_status = 12;
 }

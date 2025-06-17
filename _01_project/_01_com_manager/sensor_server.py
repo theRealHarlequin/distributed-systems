@@ -58,7 +58,7 @@ class SensorServer:
     def _append_status_buffer(self, status: SensorStatus):
         self.push_send_output.append(status)
 
-    async def _sens_rep_responder(self):
+    async def _sensor_rep_responder(self):
         while True:
             # Wait for next request from client
             message = await self.sens_rep_socket.recv()
@@ -82,7 +82,7 @@ class SensorServer:
             self.sens_rep_socket.send(self.sensor_comJoinResp_structure.SerializeToString())
             self.new_sensor_id += 1
 
-    async def _ctrl_rep_responder(self):
+    async def _control_rep_responder(self):
         while True:
             # Wait for next request from client
             message = await self.ctrl_rep_socket.recv()
@@ -112,6 +112,9 @@ class SensorServer:
                     self.log.log(
                         msg=f"[UNSUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} has been unsubscribed",
                         level=logging.INFO)
+                    self._append_status_buffer(SensorStatus(timestamp=0, id=self.ctrl_request_structure.value_0,
+                                                            factor=0, offset=0, sig_value=0,
+                                                            sig_unit=nc_msg.sens_signal_unit.UNIT_UNSPECIFIED))
                 else:
                     self.log.log(
                         msg=f"[UNSUBSCRIBE_SENSOR] ID {self.ctrl_response_structure.value_0} no sensor with this id is registrated",
@@ -135,7 +138,7 @@ class SensorServer:
 
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
-    async def _sub_listener(self):
+    async def _sensor_sub_listener(self):
         while True:
             message = await self.sens_sub_socket.recv()
             topic, raw_data = message.split(b" ", 1)  # topic is the sensor ID
@@ -148,7 +151,7 @@ class SensorServer:
             self._append_status_buffer(status=tmp_sensor_status)
             self.log.log(msg=f"[DATA_TRANSFER] Received Sensor Data of {tmp_sensor_status}", level=logging.INFO)
 
-    async def _push_data(self):
+    async def _display_push(self):
         while True:
             await asyncio.sleep(2)
             tmp_lst: List[SensorStatus] = self.push_send_output[:]
@@ -160,6 +163,7 @@ class SensorServer:
                 self.data_structure.factor = itm.factor
                 self.data_structure.offset = itm.offset
                 self.data_structure.sig_unit = itm.sig_unit
+                self.data_structure.active = 1 if itm.id in self._active_subscriptions else 0
 
                 await self.data_push_socket.send("2".encode() + b" " + self.data_structure.SerializeToString())
                 self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
@@ -167,10 +171,10 @@ class SensorServer:
     async def run_server(self):
         self.log.log(msg="[SERVER] Sensor Server running ...", level=logging.INFO)
         await asyncio.gather(
-            self._push_data(),
-            self._sub_listener(),
-            self._sens_rep_responder(),
-            self._ctrl_rep_responder()
+            self._display_push(),
+            self._sensor_sub_listener(),
+            self._sensor_rep_responder(),
+            self._control_rep_responder()
         )
 
 def parse_args():
