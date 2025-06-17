@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+// ENUMS
+
+enum ctrl_request_id {
+	GET_SENSOR_MAX_ID = 0;
+	UNSUBSCRIBE_SENSOR_ID = 1;
+	SUBSCRIBE_SENSOR_ID = 2;
+	GET_ALERT_THRESHOLD = 3;
+	SET_ALERT_THRESHOLD = 4;
+	DISPLAY_GRAPH = 5;
+}
+
+enum sens_signal_unit {
+	UNIT_UNSPECIFIED = 0;
+	UNIT_TEMP_KELVIN = 1;
+	UNIT_TEMP_CELSIUS = 2;
+	UNIT_PRES_BAR = 3;
+	UNIT_PRES_PASCAL = 4;
+	UNIT_ROTA_RPM = 5;
+}
+
+enum sens_type {
+	TYPE_TEMPERATURE = 0;
+	TYPE_PRESSURE = 1;
+	TYPE_ROTATION = 2;
+}
+
+// Sensor <-> Sensor Server Communication
+message sens_status {
+	uint64 timestamp = 1;
+	uint32 id = 2;
+	int32 sig_value = 3;
+	uint32 factor = 4;
+	uint32 offset = 5;
+	sens_signal_unit sig_unit = 6;
+}
+
+message sens_com_join{
+	uint32 connect = 1;
+	sens_type type = 2;
+	uint32 sample_freq = 3;
+}
+
+message sens_com_join_resp{
+	uint32 sensor_id = 1;
+}
+
+// Main Appl <-> Sensor Server / Analyse Server Communication (CONTROL)
+message ctrl_RSDBI {
+	ctrl_request_id id = 1;
+	uint32 value_0 =2;
+	uint32 value_1 =3;
+	uint32 value_2 =4;
+	uint32 value_3 =5;
+	uint32 value_4 =6;
+	uint32 value_5 =7;
+	uint32 value_6 =8;
+	uint32 value_7 =9;
+}
+
+message ctrl_RSDBI_resp {
+	ctrl_request_id id = 1;
+	uint32 value_0 =2;
+	uint32 value_1 =3;
+	uint32 value_2 =4;
+	uint32 value_3 =5;
+	uint32 value_4 =6;
+	uint32 value_5 =7;
+	uint32 value_6 =8;
+	uint32 value_7 =9;
+}
+
+// Analyse Server <-> Display Communication (OUTPUT)
+message disp_numb_sensor{
+	uint32 number_sensor = 1;
+}
+
+message disp_sensor_status {
+	uint32 sensor_id =1;
+	uint32 sample_freq = 2;
+	sens_type type = 3;
+	uint32 active = 4;
+	uint64 timestamp = 5;
+	int32 sig_value = 6;
+	uint32 factor = 7;
+	uint32 offset = 8;
+	sens_signal_unit sig_unit = 9;
+}

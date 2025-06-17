@@ -1,9 +1,9 @@
-import time, logging, argparse
+import logging, argparse
 from typing import List
 from logger import Logger
 from _01_project._99_helper.helper import conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str
-from _01_project._01_com_manager.data_structure import SensorItem, SensorStatus
-from _01_project._02_data_source import sensor_message_pb2 as sensor_msg
+from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
+from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
 
 class AnalyseServer:
@@ -21,8 +21,8 @@ class AnalyseServer:
         self.pull_socket.bind("tcp://*:5553")
 
         # Init Messages
-        self.data_transfer_structure = sensor_msg.SensorStatus()
-        self.sens_reg_structure = sensor_msg.ComJoin()
+        self.data_transfer_structure = nc_msg.sens_status()
+        self.sens_reg_structure = nc_msg.sens_com_join()
 
         # Attributes:
         self.sensor_database: List[SensorItem] = []

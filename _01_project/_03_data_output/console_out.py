@@ -1,66 +1,53 @@
 import os
 
-class Tabelle:
+class TableDisplay:
     def __init__(self):
-        self.name = ""
-        self.spalten = []
-        self.daten = []
+        self.title = ""
+        self.columns = []
+        self.rows = []
 
-    def tabelle_erstellen(self, name, spalten):
-        """Erstellt die Tabelle mit Name und Spaltenüberschriften."""
-        self.name = name
-        self.spalten = spalten
-        self.daten = []
-        self._konsole_leeren()
-        print(f"Tabelle '{name}' mit Spalten {spalten} erstellt.")
+    def create_table(self, title, columns):
+        """Initializes the table with a title and column headers."""
+        self.title = title
+        self.columns = columns
+        self.rows = []
+        self._clear_console()
+        print(f"Table '{title}' with columns {columns} created.")
 
-    def daten_hinzufuegen(self, werte):
-        """Fügt eine neue Zeile mit Werten hinzu und zeigt die Tabelle an."""
-        if len(werte) != len(self.spalten):
-            print("Fehler: Anzahl der Werte stimmt nicht mit Anzahl der Spalten überein!")
+    def add_row(self, values):
+        """Adds a new row of data and refreshes the table display."""
+        if len(values) != len(self.columns):
+            print("Error: Number of values does not match number of columns!")
             return
 
-        self.daten.append(werte)
-        self._konsole_leeren()
-        self._tabelle_anzeigen()
+        self.rows.append(values)
+        self._clear_console()
+        self._display_table()
 
-    def _tabelle_anzeigen(self):
-        """Gibt die Tabelle mit Rahmen und zentrierten Werten aus."""
-        # Spaltenbreite berechnen
-        spalten_breiten = [len(spalte) for spalte in self.spalten]
-        for zeile in self.daten:
-            for i, wert in enumerate(zeile):
-                spalten_breiten[i] = max(spalten_breiten[i], len(str(wert)))
+    def _display_table(self):
+        """Displays the table with borders and centered values."""
+        # Determine column widths
+        col_widths = [len(col) for col in self.columns]
+        for row in self.rows:
+            for i, val in enumerate(row):
+                col_widths[i] = max(col_widths[i], len(str(val)))
 
-        # Hilfsfunktionen für Rahmen
-        def rahmen_zeile():
-            return "+" + "+".join("-" * (breite + 2) for breite in spalten_breiten) + "+"
+        # Helper functions for borders
+        def border_line():
+            return "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
 
-        def zeile_formatieren(zeile):
-            return "|" + "|".join(f" {str(wert).center(breite)} " for wert, breite in zip(zeile, spalten_breiten)) + "|"
+        def format_row(row):
+            return "|" + "|".join(f" {str(val).center(w)} " for val, w in zip(row, col_widths)) + "|"
 
-        # Tabelle ausgeben
-        print(self.name)
-        print(rahmen_zeile())
-        print(zeile_formatieren(self.spalten))
-        print(rahmen_zeile())
-        for zeile in self.daten:
-            print(zeile_formatieren(zeile))
-        print(rahmen_zeile())
+        # Display the table
+        print(self.title)
+        print(border_line())
+        print(format_row(self.columns))
+        print(border_line())
+        for row in self.rows:
+            print(format_row(row))
+        print(border_line())
 
-    def _konsole_leeren(self):
-        """Cleart die Konsole (für Windows, Linux, Mac)."""
+    def _clear_console(self):
+        """Clears the terminal screen (Windows, Linux, macOS)."""
         os.system('cls' if os.name == 'nt' else 'clear')
-
-# Beispiel:
-if __name__ == "__main__":
-    import time
-
-    tabelle = Tabelle()
-    tabelle.tabelle_erstellen("Mitarbeiter", ["ID", "Name", "Position"])
-
-    tabelle.daten_hinzufuegen([1, "Anna", "Manager"])
-    time.sleep(2)  # Nur damit man sieht, was passiert
-    tabelle.daten_hinzufuegen([2, "Ben", "Entwickler"])
-    time.sleep(2)
-    tabelle.daten_hinzufuegen([3, "Clara", "Designer"])

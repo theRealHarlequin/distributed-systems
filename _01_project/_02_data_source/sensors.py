@@ -3,17 +3,17 @@ from enum import Enum
 from abc import ABC
 from logger import Logger
 from datetime import datetime as dt
-import sensor_message_pb2 as sensor_msg
+import _01_project._00_data_structure.message_pb2 as nc_msg
 from _01_project._99_helper.helper import conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str, conv_sig_value
 
 class Sensor(ABC):
     """A class representing a generic sensor."""
-    def __init__(self, sensor_type: sensor_msg.sensor_type, offset:float, factor:float, unit:str, min_value_area: int,
-                 max_value_area: int, send_freq_ms:int, log_file_path:str=None ):
+    def __init__(self, sens_type: nc_msg.sens_type, offset:float, factor:float, unit:str, min_value_area: int,
+                 max_value_area: int, send_freq_ms:int, log_file_path:str=None):
 
         ## Init Sensor
         self.id: int = 0
-        self.type: sensor_msg.sensor_type = sensor_type
+        self.type: nc_msg.sens_type = sens_type
         self.offset: float = offset
         self.factor: float = factor
         self.unit = unit
@@ -38,13 +38,13 @@ class Sensor(ABC):
         self.pub_socket.connect("tcp://localhost:5550")
 
         # Init Messages
-        self.sensor_comJoin_msg = sensor_msg.ComJoin()
-        self.sensor_comJoinResp_msg = sensor_msg.ComJoinResp()
-        self.sensor_data_msg = sensor_msg.SensorStatus()
+        self.sensor_comJoin_msg = nc_msg.sens_com_join()
+        self.sensor_comJoinResp_msg = nc_msg.sens_com_join_resp()
+        self.sensor_data_msg = nc_msg.sens_status()
 
         ## Init Logger
         self.log = Logger(external_log_file=log_file_path, sub_proc_name="SENSOR")
-        self.log.log(msg=f"Init new Sensor of type [{conv_sensor_type_enum_2_str(sensor_type)}]", level=logging.INFO)
+        self.log.log(msg=f"Init new Sensor of type [{conv_sensor_type_enum_2_str(sens_type)}]", level=logging.INFO)
 
     async def _connect(self):
         """Simulate connecting the sensor."""
@@ -114,30 +114,30 @@ class Sensor(ABC):
 
 class TempSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_TEMPERATURE,
+        super().__init__(sens_type=nc_msg.sens_type.TYPE_TEMPERATURE,
                          offset=5.0,
                          factor=1.0,
-                         unit=sensor_msg.sensor_signal_unit.UNIT_TEMP_CELSIUS,
+                         unit=nc_msg.sens_signal_unit.UNIT_TEMP_CELSIUS,
                          min_value_area=0,
                          max_value_area=50,
                          send_freq_ms=1000)
 
 class PresSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_PRESSURE,
-                       offset=0.0,
-                       factor=1.0,
-                       unit=sensor_msg.sensor_signal_unit.UNIT_PRES_BAR,
-                       min_value_area=1,
-                       max_value_area=10,
-                       send_freq_ms=20000)
+        super().__init__(sens_type=nc_msg.sens_type.TYPE_PRESSURE,
+                         offset=0.0,
+                         factor=1.0,
+                         unit=nc_msg.sens_signal_unit.UNIT_PRES_BAR,
+                         min_value_area=1,
+                         max_value_area=10,
+                         send_freq_ms=20000)
 
 class RotSensor(Sensor):
     def __init__(self):
-        super().__init__(sensor_type=sensor_msg.sensor_type.TYPE_ROTATION,
+        super().__init__(sens_type=nc_msg.sens_type.TYPE_ROTATION,
                          offset=0.0,
                          factor=1.0,
-                         unit=sensor_msg.sensor_signal_unit.UNIT_ROTA_RPM,
+                         unit=nc_msg.sens_signal_unit.UNIT_ROTA_RPM,
                          min_value_area=0,
                          max_value_area=1500,
                          send_freq_ms=500)

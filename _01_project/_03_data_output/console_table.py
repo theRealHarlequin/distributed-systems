@@ -60,7 +60,6 @@ class ConsoleTable:
 
         separator = self._make_separator()
         print(self.title)
-        print("")
         print(separator)
         print(self._make_row(self.headers))
         print(separator)

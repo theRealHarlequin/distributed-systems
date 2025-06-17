@@ -1,12 +1,10 @@
 import time, logging, argparse
-from typing import List, Set, cast
-from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_ctrl_type_enum_2_str
+from typing import List, Set
+from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_ctrl_type_enum_2_str
 from logger import Logger
-from _01_project._02_data_source import sensor_message_pb2 as sensor_msg
-from _01_project._01_com_manager import system_message_pb2 as system_msg
-from _01_project._01_com_manager.data_structure import SensorItem, SensorStatus
+from _01_project._00_data_structure import message_pb2 as nc_msg
+from _01_project._00_data_structure.data_structure import SensorStatus
 import asyncio, zmq, sys, zmq.asyncio
-from datetime import datetime as dt
 
 
 class SensorServer:
@@ -37,12 +35,12 @@ class SensorServer:
         self.data_push_socket.connect("tcp://localhost:5553")
 
         # Init Messages
-        self.sensor_comJoin_structure = sensor_msg.ComJoin()
-        self.sensor_comJoinResp_structure = sensor_msg.ComJoinResp()
-        self.sensor_data_structure = sensor_msg.SensorStatus()
-        self.ctrl_request_structure = system_msg.RSDBI()
-        self.ctrl_response_structure = system_msg.RSDBI_resp()
-        self.data_structure = sensor_msg.SensorStatus()
+        self.sensor_comJoin_structure = nc_msg.sens_com_join()
+        self.sensor_comJoinResp_structure = nc_msg.sens_com_join_resp()
+        self.sensor_data_structure = nc_msg.sens_status()
+        self.ctrl_request_structure = nc_msg.ctrl_RSDBI()
+        self.ctrl_response_structure = nc_msg.ctrl_RSDBI_resp()
+        self.data_structure = nc_msg.sens_status()
 
         # Attributes:
         self.push_send_output: List[SensorStatus] = []
@@ -94,7 +92,7 @@ class SensorServer:
                              f"Type: {conv_ctrl_type_enum_2_str(self.ctrl_request_structure.id)}",
                          level=logging.INFO)
 
-            if self.ctrl_request_structure.id == system_msg.request_id.GET_SENSOR_MAX_ID:
+            if self.ctrl_request_structure.id == nc_msg.ctrl_request_id.GET_SENSOR_MAX_ID:
                 self.ctrl_response_structure.id = self.ctrl_request_structure.id
                 self.ctrl_response_structure.value_0 = max(self.sensor_database, key=lambda item: item.id).id
                 self.log.log(msg=f"[CTRL_RESP] Sending response: number of sensors {self.ctrl_response_structure.value_0}",
@@ -103,7 +101,7 @@ class SensorServer:
                 time.sleep(10)
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
-            elif self.ctrl_request_structure.id == system_msg.request_id.UNSUBSCRIBE_SENSOR_ID:
+            elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.UNSUBSCRIBE_SENSOR_ID:
                 self.ctrl_response_structure.id = self.ctrl_request_structure.id
                 self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
                 self.ctrl_response_structure.value_1 = 1
@@ -121,7 +119,7 @@ class SensorServer:
 
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
-            elif self.ctrl_request_structure.id == system_msg.request_id.SUBSCRIBE_SENSOR_ID:
+            elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.SUBSCRIBE_SENSOR_ID:
                 self.ctrl_response_structure.id = self.ctrl_request_structure.id
                 self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
                 self.ctrl_response_structure.value_1 = 1

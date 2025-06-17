@@ -1,7 +1,6 @@
 import logging, zmq, zmq.asyncio, asyncio, os, subprocess, time
 from _99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
-from _02_data_source import sensor_message_pb2 as sensor_msg
-from _01_project._01_com_manager import system_message_pb2 as system_msg
+from _00_data_structure import message_pb2 as nc_msg
 from logger import Logger
 
 # Get the directory of the current script
@@ -31,8 +30,8 @@ class sim_control:
         self.ctrl_req_socket = self.ctx_req.socket(zmq.REQ)
         self.ctrl_req_socket.connect("tcp://localhost:5552")
 
-        self.ctrl_req_structure = system_msg.RSDBI()
-        self.ctrl_resp_structure = system_msg.RSDBI_resp()
+        self.ctrl_req_structure = nc_msg.ctrl_RSDBI()
+        self.ctrl_resp_structure = nc_msg.ctrl_RSDBI_resp()
 
         self.menu_options = [("Add new sensor to the control system.", self._add_sensor_to_system),
                              ("Unsubscribe sensor from the control system.", self._unsubscribe_sensor),
@@ -105,11 +104,11 @@ class sim_control:
         #inp_max_value_area = self._get_validated_input(prompt=f"What is the highest value of the sensor area? (Greater than smallest) (between 0 and 1000):",
         #                                      min_value=0,
         #                                      max_value=1000)
-        if inp_sensor_type == sensor_msg.sensor_type.TYPE_ROTATION:
+        if inp_sensor_type == nc_msg.sens_type.TYPE_ROTATION:
             self.start_new_subprocess(script=r"_02_data_source/rotation_sensor.py")
-        elif inp_sensor_type == sensor_msg.sensor_type.TYPE_TEMPERATURE:
+        elif inp_sensor_type == nc_msg.sens_type.TYPE_TEMPERATURE:
             self.start_new_subprocess(script=r"_02_data_source/temperature_sensor.py")
-        elif inp_sensor_type == sensor_msg.sensor_type.TYPE_PRESSURE:
+        elif inp_sensor_type == nc_msg.sens_type.TYPE_PRESSURE:
             self.start_new_subprocess(script=r"_02_data_source/pressure_sensor.py")
         print("")
         input("Press Enter to return to the menu.")
@@ -117,7 +116,7 @@ class sim_control:
     def _unsubscribe_sensor(self):
         print("Running - Unsubscribe Sensor...")
         id_2_unsub = self._get_validated_input(prompt=f"Sensor ID to unsubscribe : ", min_value=1, max_value=100)
-        status = self._control_communication(req_id=system_msg.request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_unsub)
+        status = self._control_communication(req_id=nc_msg.ctrl_request_id.UNSUBSCRIBE_SENSOR_ID, value_0= id_2_unsub)
         if status:
             print(f"Unsubsciption of Sensor with ID: {id_2_unsub}.")
         else:
@@ -127,7 +126,7 @@ class sim_control:
     def _subscribe_sensor(self):
         print("Running - subscribe Sensor...")
         id_2_sub = self._get_validated_input(prompt=f"Sensor ID to subscribe : ", min_value=1, max_value=100)
-        status = self._control_communication(req_id=system_msg.request_id.SUBSCRIBE_SENSOR_ID, value_0=id_2_sub)
+        status = self._control_communication(req_id=nc_msg.ctrl_request_id.SUBSCRIBE_SENSOR_ID, value_0=id_2_sub)
         if status:
             print(f"Subscibtion of Sensor with ID: {id_2_sub}.")
         else:
@@ -145,7 +144,7 @@ class sim_control:
             p.terminate()
         exit()
 
-    def _control_communication(self, req_id: system_msg.request_id, value_0: int=0, value_1: int=0, value_2: int=0, value_3: int=0,
+    def _control_communication(self, req_id: nc_msg.ctrl_request_id, value_0: int=0, value_1: int=0, value_2: int=0, value_3: int=0,
                                      value_4: int=0, value_5: int=0, value_6: int=0, value_7: int=0):
         self.ctrl_req_structure.id = req_id
         self.ctrl_req_structure.value_0 = 0
@@ -156,7 +155,7 @@ class sim_control:
         self.ctrl_req_structure.value_5 = 0
         self.ctrl_req_structure.value_6 = 0
         self.ctrl_req_structure.value_7 = 0
-        if req_id == system_msg.request_id.GET_SENSOR_MAX_ID:
+        if req_id == nc_msg.ctrl_request_id.GET_SENSOR_MAX_ID:
             # Send Request
             self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
 
@@ -169,7 +168,7 @@ class sim_control:
             else:
                 return None
 
-        elif req_id == system_msg.request_id.UNSUBSCRIBE_SENSOR_ID:
+        elif req_id == nc_msg.ctrl_request_id.UNSUBSCRIBE_SENSOR_ID:
             # Send Request
             self.ctrl_req_structure.value_0 = value_0
             self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
@@ -183,7 +182,7 @@ class sim_control:
             else:
                 return None
 
-        elif req_id == system_msg.request_id.SUBSCRIBE_SENSOR_ID:
+        elif req_id == nc_msg.ctrl_request_id.SUBSCRIBE_SENSOR_ID:
             # Send Request
             self.ctrl_req_structure.value_0 = value_0
             self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
@@ -197,11 +196,11 @@ class sim_control:
             else:
                 return None
 
-        elif req_id == system_msg.request_id.GET_ALERT_THRESHOLD:
+        elif req_id == nc_msg.ctrl_request_id.GET_ALERT_THRESHOLD:
             pass
-        elif req_id == system_msg.request_id.SET_ALERT_THRESHOLD:
+        elif req_id == nc_msg.ctrl_request_id.SET_ALERT_THRESHOLD:
             pass
-        elif req_id == system_msg.request_id.DISPLAY_GRAPH:
+        elif req_id == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
             pass
         self.ctrl_req_socket.send(self.ctrl_resp_structure.SerializeToString())
 
