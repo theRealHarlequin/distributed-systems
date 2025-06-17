@@ -21,9 +21,8 @@ class Display:
 
         # Variables
         self._display_list:List[StatusDisplayItem] = []
-        self._number_sensors: int = 0
 
-        self.input_disp_numb_sensor = nc_msg.disp_numb_sensor()
+        self.input_disp_trans_done = nc_msg.disp_trans_done()
         self.input_disp_sensor_status = nc_msg.disp_sensor_status()
 
     async def _data_pull_responder(self):
@@ -32,19 +31,24 @@ class Display:
             message = await self.pull_socket.recv()
             topic, raw_data = message.split(b" ", 1)  # topic: 1 -> number of sensors | 2 -> Data
             if topic == b'1':
-                self.input_disp_numb_sensor.ParseFromString(raw_data)
-                data = self.input_disp_numb_sensor
-                self._number_sensors = data.number_sensor
+                self.input_disp_trans_done.ParseFromString(raw_data)
+                if self.input_disp_trans_done.done == 1:
+                    self._display_list.clear()
+
+                    pass
+                #TODO print measured data
+                #Todo delete list of data after print
             elif topic == b'2':
                 self.input_disp_sensor_status.ParseFromString(raw_data)
                 data = self.input_disp_sensor_status
-                measured_data = StatusDisplayItem(sensor_id=data.sensor_id, sample_freq=data.sample_freq,
-                                                  type=conv_sensor_type_enum_2_str(data.type),
-                                                  active=data.active, timestamp=data.timestamp, sig_value=data.sig_value,
-                                                  factor=data.factor, offset=data.offset, sig_unit=data.sig_unit,
-                                                  lower_threshold=str(data.lower_threshold) if data.lower_threshold > 0 else "",
-                                                  upper_threshold=str(data.upper_threshold) if data.upper_threshold > 0 else "",
-                                                  threshold_status=conv_threshold_status_enum_2_str(data.threshold_status))
+                self._display_list.append(StatusDisplayItem(sensor_id=data.sensor_id, sample_freq=data.sample_freq,
+                                                            type=conv_sensor_type_enum_2_str(data.type),
+                                                            active=data.active, timestamp=data.timestamp, sig_value=data.sig_value,
+                                                            factor=data.factor, offset=data.offset, sig_unit=data.sig_unit,
+                                                            lower_threshold=str(data.lower_threshold) if data.lower_threshold > 0 else "",
+                                                            upper_threshold=str(data.upper_threshold) if data.upper_threshold > 0 else "",
+                                                            threshold_status=conv_threshold_status_enum_2_str(data.threshold_status)))
+
 
     async def run_server(self):
         await asyncio.gather(

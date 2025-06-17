@@ -209,7 +209,7 @@ class sim_control:
         # start Server
         self.start_new_subprocess(script="_04_data_analyse/analyse_server.py")
         self.start_new_subprocess(script="_01_com_manager/sensor_server.py")
-
+        self.start_new_subprocess(script="_03_data_output/display_output.py")
         # start loop
         while True:
             self._clear_console()

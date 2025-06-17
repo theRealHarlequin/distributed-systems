@@ -1,7 +1,8 @@
 import logging, argparse
 from typing import List
 from logger import Logger
-from _01_project._99_helper.helper import conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str, conv_sensor_type_str_2_enum
+from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
+                                           conv_sensor_type_str_2_enum)
 from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
 from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
@@ -28,7 +29,7 @@ class AnalyseServer:
         # Init Messages
         self.data_transfer_structure = nc_msg.sens_status()
         self.sens_reg_structure = nc_msg.sens_com_join()
-        self.disp_disp_numb_sensor = nc_msg.disp_numb_sensor()
+        self.disp_trans_done = nc_msg.disp_trans_done()
         self.disp_disp_sensor_status = nc_msg.disp_sensor_status()
 
         # Attributes:
@@ -64,9 +65,8 @@ class AnalyseServer:
 
     async def _display_push_data(self):
         while True:
-            await asyncio.sleep(1)
-            tmp_sensor_cnt = len(self.sensor_database)
-            if tmp_sensor_cnt > 1:
+            await asyncio.sleep(4)
+            if len(self.sensor_database) >= 1:
                 for sensor in self.sensor_database:
                     data = sensor.data[-1]
                     self.disp_disp_sensor_status.sensor_id = sensor.id
@@ -82,7 +82,9 @@ class AnalyseServer:
                     self.disp_disp_sensor_status.upper_threshold = 0#sensor.upper_threshold
                     self.disp_disp_sensor_status.threshold_status = 0#data.threshold_status #TODO IF Verzweigung
 
-                await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
+                    await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
+                self.disp_trans_done.done = 1
+                await self.disp_push_socket.send("1".encode() + b" " + self.disp_trans_done.SerializeToString())
                 self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
 
     def _append_status_to_sensor(self, status: SensorStatus, active):
@@ -96,7 +98,8 @@ class AnalyseServer:
     async def run_server(self):
         self.log.log(msg="[SERVER] Analyse Server running ...", level=logging.INFO)
         await asyncio.gather(
-            self._data_pull_responder()
+            self._data_pull_responder(),
+            self._display_push_data()
         )
 
 

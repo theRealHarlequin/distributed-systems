@@ -80,8 +80,8 @@ message ctrl_RSDBI_resp {
 }
 
 // Analyse Server <-> Display Communication (OUTPUT)
-message disp_numb_sensor{
-	uint32 number_sensor = 1;
+message disp_trans_done{
+	uint32 done = 1;
 }
 
 message disp_sensor_status {
