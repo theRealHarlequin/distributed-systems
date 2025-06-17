@@ -115,3 +115,55 @@ class SensorItem:
 
     def append_sensor_value(self, value: SensorStatus):
         self.data.append(value)
+
+@dataclass
+class StatusDisplayItem:
+    def __init__(self,sensor_id: int, sample_freq: int, type_: str, active: bool, timestamp: int, sig_value: int,
+                 factor: int, offset: int, sig_unit: str):
+        self._sensor_id: int = sensor_id
+        self._sample_freq: int = sample_freq
+        self._type: str = type_
+        self._active: bool = active
+        self._timestamp: int = timestamp
+        self._sig_value: int = sig_value
+        self._factor: int = factor
+        self._offset: int = offset
+        self._sig_unit: str = sig_unit
+
+    @property
+    def sensor_id(self) -> int:
+        return self._sensor_id
+
+    @property
+    def sample_freq(self) -> int:
+        return self._sample_freq
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def active(self) -> int:
+        return self._active
+
+    @property
+    def timestamp(self) -> int:
+        return self._timestamp
+
+    @property
+    def sig_value(self) -> int:
+        return self._sig_value
+
+    @property
+    def factor(self) -> int:
+        return self._factor
+
+    @property
+    def offset(self) -> int:
+        return self._offset
+
+    @property
+    def sig_unit(self) -> str:
+        return self._sig_unit
+
+
