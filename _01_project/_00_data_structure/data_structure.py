@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 from datetime import datetime as dt
 from _01_project._99_helper.helper import conv_sig_value
 
@@ -73,24 +73,20 @@ class SensorItem:
         id (int): Unique identifier for the data sample.
         sample_freq (float): Sampling frequency in Hz.
         type (str): Type of the sensor or measurement.
-        data (List[SensorStatus]): The actual data collected, e.g., list of values.
+        data (List[SensorStatus]): The actual data collected.
+        active (bool): Whether the sensor is currently active.
+        lower_threshold (int): Lower threshold for triggering events.
+        upper_threshold (int): Upper threshold for triggering events.
     """
 
-    def __init__(self, ident: int, sample_freq: float, type: str):
-        """
-        Initializes a new instance of the SensorData class.
-
-        Args:
-            ident (int): Unique identifier for the data sample.
-            sample_freq (float): Sampling frequency in Hz.
-            type (str): Type of the sensor or measurement.
-            data (List[SensorStatus]): The actual data collected.
-        """
+    def __init__(self, ident: int, sample_freq: float, type: str, lower_thre:int=None, upper_the:int=None):
         self._id: int = ident
         self._sample_freq: float = sample_freq
         self._type: str = type
         self._data: List = [SensorStatus]
         self._active: bool = True
+        self._lower_threshold: int = lower_thre
+        self._upper_threshold: int = upper_the
 
     @property
     def id(self) -> int:
@@ -101,7 +97,6 @@ class SensorItem:
     def sample_freq(self) -> float:
         """Gets the sampling frequency in Hz."""
         return self._sample_freq
-
 
     @property
     def type(self) -> str:
@@ -117,6 +112,21 @@ class SensorItem:
     def active(self) -> bool:
         """Info about registraion of Sensor."""
         return self._active
+    @property
+    def lower_threshold(self) -> Optional[int]:
+        return self._lower_threshold
+
+    @lower_threshold.setter
+    def lower_threshold(self, value: int):
+        self._lower_threshold = value
+
+    @property
+    def upper_threshold(self) -> Optional[int]:
+        return self._upper_threshold
+
+    @upper_threshold.setter
+    def upper_threshold(self, value: int):
+        self._upper_threshold = value
 
     def set_active(self, active):
         self._active = active

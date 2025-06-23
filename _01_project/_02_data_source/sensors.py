@@ -92,8 +92,8 @@ class Sensor(ABC):
         # generate MSG
         self.sensor_data_msg.timestamp = int(dt.now().timestamp() * 100)
         self.sensor_data_msg.id = self.id
-        self.sensor_data_msg.factor = int(self.factor * 100)
-        self.sensor_data_msg.offset = int(self.offset * 100)
+        self.sensor_data_msg.factor = int(self.factor * 1000)
+        self.sensor_data_msg.offset = int(self.offset * 1000)
         self.sensor_data_msg.sig_unit = self.unit
         self.sensor_data_msg.sig_value = self.value
 

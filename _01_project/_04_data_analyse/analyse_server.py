@@ -57,7 +57,7 @@ class AnalyseServer:
                                                  sig_value=data.sig_value, sig_unit=data.sig_unit)
 
                 self.log.log(msg=f"[DATA_TRANS] Received Sensor Data -- "
-                                 f"Time: {tmp_status.timestamp} - Sensor ID: Sensor {tmp_status.id} - "
+                                 f"Time: {tmp_status.timestamp} - Sensor ID: Sensor {tmp_status.id} -  raw: {tmp_status.sig_value} "
                                  f"Value: {conv_sig_value(value=tmp_status.sig_value, factor= tmp_status.factor, offset=tmp_status.offset) }"
                                  f" {conv_sensor_sig_unit_enum_2_str(tmp_status.sig_unit)}", level=logging.INFO)
 
@@ -65,24 +65,37 @@ class AnalyseServer:
 
     async def _display_push_data(self):
         while True:
-            await asyncio.sleep(4)
+            await asyncio.sleep(2)
             if len(self.sensor_database) >= 1:
                 for sensor in self.sensor_database:
-                    data = sensor.data[-1]
-                    self.disp_disp_sensor_status.sensor_id = sensor.id
-                    self.disp_disp_sensor_status.sample_freq = sensor.sample_freq
-                    self.disp_disp_sensor_status.type = conv_sensor_type_str_2_enum(sensor.type)
-                    self.disp_disp_sensor_status.active = sensor.active
-                    self.disp_disp_sensor_status.timestamp = data.timestamp
-                    self.disp_disp_sensor_status.sig_value = data.sig_value
-                    self.disp_disp_sensor_status.factor = data.factor
-                    self.disp_disp_sensor_status.offset = data.offset
-                    self.disp_disp_sensor_status.sig_unit = data.sig_unit #Todo Revert Fucntion
-                    self.disp_disp_sensor_status.lower_threshold = 0#sensor.lower_threshold
-                    self.disp_disp_sensor_status.upper_threshold = 0#sensor.upper_threshold
-                    self.disp_disp_sensor_status.threshold_status = 0#data.threshold_status #TODO IF Verzweigung
+                    if len(sensor.data) > 1:
+                        data = sensor.data[-1]
+                        self.disp_disp_sensor_status.sensor_id = sensor.id
+                        self.disp_disp_sensor_status.sample_freq = sensor.sample_freq
+                        self.disp_disp_sensor_status.type = conv_sensor_type_str_2_enum(sensor.type)
+                        self.disp_disp_sensor_status.active = sensor.active
+                        self.disp_disp_sensor_status.timestamp = data.timestamp
+                        self.disp_disp_sensor_status.sig_value = data.sig_value
+                        self.disp_disp_sensor_status.factor = data.factor
+                        self.disp_disp_sensor_status.offset = data.offset
+                        self.disp_disp_sensor_status.sig_unit = data.sig_unit
+                        if sensor.type == nc_msg.sens_type.TYPE_ROTATION:
+                            enc_sig_val = conv_sig_value(value=data.sig_value, factor=data.factor, offset=data.offset)
+                            self.disp_disp_sensor_status.lower_threshold = sensor.lower_threshold
+                            self.disp_disp_sensor_status.upper_threshold = sensor.upper_threshold
+                            if enc_sig_val < sensor.lower_threshold and isinstance(sensor.lower_threshold, int):
+                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_LOW
 
-                    await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
+                            elif enc_sig_val > sensor.upper_threshold and isinstance(sensor.upper_threshold, int):
+                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_HIGH
+
+                            elif not isinstance(sensor.upper_threshold, int) and not isinstance(sensor.lower_threshold, int):
+                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.NO_EVALUATION
+
+                            else:
+                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_INSIDE_AREA
+
+                        await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
                 self.disp_trans_done.done = 1
                 await self.disp_push_socket.send("1".encode() + b" " + self.disp_trans_done.SerializeToString())
                 self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)

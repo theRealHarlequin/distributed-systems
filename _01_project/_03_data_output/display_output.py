@@ -1,7 +1,9 @@
 import logging, argparse
+from datetime import datetime
+from _01_project._03_data_output.console_table import ConsoleTable
 from typing import List
 from _01_project._00_data_structure.data_structure import StatusDisplayItem
-from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_threshold_status_enum_2_str
+from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_threshold_status_enum_2_str, conv_sig_value, conv_sensor_sig_unit_enum_2_str
 from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
 
@@ -20,6 +22,18 @@ class Display:
         self.pull_socket.bind("tcp://*:5554")
 
         # Variables
+        title = """                                                               _ _             _             
+                                                              (_) |           (_)            
+         ___  ___ _ __  ___  ___  _ __   _ __ ___   ___  _ __  _| |_ ___  _ __ _ _ __   __ _ 
+        / __|/ _ \ '_ \/ __|/ _ \| '__| | '_ ` _ \ / _ \| '_ \| | __/ _ \| '__| | '_ \ / _` |
+        \__ \  __/ | | \__ \ (_) | |    | | | | | | (_) | | | | | || (_) | |  | | | | | (_| |
+        |___/\___|_| |_|___/\___/|_|    |_| |_| |_|\___/|_| |_|_|\__\___/|_|  |_|_| |_|\__, |
+                                                                                        __/ |
+                                                                                       |___/ 
+        """
+        headers = ['Sensor ID', 'Sensor Type', 'Frequency', 'Timestamp', ' Value', ' Unit', 'lower threshold',
+                   'upper threshold', 'status threshold']
+        self._output_table: ConsoleTable = ConsoleTable(title=title, headers=headers)
         self._display_list:List[StatusDisplayItem] = []
 
         self.input_disp_trans_done = nc_msg.disp_trans_done()
@@ -33,11 +47,16 @@ class Display:
             if topic == b'1':
                 self.input_disp_trans_done.ParseFromString(raw_data)
                 if self.input_disp_trans_done.done == 1:
+                    str_lst = []
+                    for itm in self._display_list:
+                        str_lst.append([str(itm.sensor_id), str(itm.type), str(itm.sample_freq),
+                                        datetime.fromtimestamp(itm.timestamp/100).strftime("%Y-%m-%d %H:%M:%S"),
+                                        conv_sig_value(value=itm.sig_value, factor=itm.factor/1000, offset=itm.offset/1000),
+                                        conv_sensor_sig_unit_enum_2_str(itm.sig_unit), itm.lower_threshold,
+                                        itm.upper_threshold, conv_threshold_status_enum_2_str(itm.threshold_status)])
+                    self._output_table.add_rows(str_lst)
+                    self._output_table.display()
                     self._display_list.clear()
-
-                    pass
-                #TODO print measured data
-                #Todo delete list of data after print
             elif topic == b'2':
                 self.input_disp_sensor_status.ParseFromString(raw_data)
                 data = self.input_disp_sensor_status

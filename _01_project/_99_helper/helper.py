@@ -80,4 +80,5 @@ def get_all_sensor_var() -> dict:
 
 
 def conv_sig_value(value: float, factor: float, offset: float) -> float:
+    var1 = (value * int(factor * 1000) / 1000 + int(offset * 1000) / 1000)
     return (value * int(factor * 1000) / 1000 + int(offset * 1000) / 1000)

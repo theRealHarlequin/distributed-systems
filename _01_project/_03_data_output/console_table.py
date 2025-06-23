@@ -1,26 +1,27 @@
 import os
+from typing import List
 
 
 class ConsoleTable:
     """A simple class to display and update a dynamic box-style table in the console."""
 
-    def __init__(self, title, headers):
+    def __init__(self, title: str, headers: List[str]):
         """
         Initialize the table with headers.
 
         Args:
             headers (list of str): The header names for the table columns.
         """
-        self.title = title
-        self.headers = headers
-        self.rows = []
+        self.title: str = title
+        self.headers: List[str] = headers
+        self.rows: List[str] = []
         self.col_widths = [len(header) for header in headers]
 
     def clear_console(self):
         """Clear the console output."""
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    def update_widths(self, new_row):
+    def update_widths(self, new_row: List[str]):
         """
         Update the column widths based on a new row.
 
@@ -34,13 +35,14 @@ class ConsoleTable:
                 # Handle case where a new row has more columns than headers
                 self.col_widths.append(len(str(value)))
 
-    def add_rows(self, new_rows):
+    def add_rows(self, new_rows: List[List[str]]):
         """
         Add multiple new rows to the table and redraw.
 
         Args:
             new_rows (list of list): List of rows to add, each row is a list of strings.
         """
+        self.rows.clear()
         for row in new_rows:
             self.update_widths(row)
             self.rows.append(row)
@@ -65,28 +67,28 @@ class ConsoleTable:
         print(separator)
         for row in self.rows:
             print(self._make_row(row))
-        print(separator)
+            print(separator)
 
 
 # Example usage
-if __name__ == "__main__":
-    title = """                                                       _ _             _             
-                                                      (_) |           (_)            
- ___  ___ _ __  ___  ___  _ __   _ __ ___   ___  _ __  _| |_ ___  _ __ _ _ __   __ _ 
-/ __|/ _ \ '_ \/ __|/ _ \| '__| | '_ ` _ \ / _ \| '_ \| | __/ _ \| '__| | '_ \ / _` |
-\__ \  __/ | | \__ \ (_) | |    | | | | | | (_) | | | | | || (_) | |  | | | | | (_| |
-|___/\___|_| |_|___/\___/|_|    |_| |_| |_|\___/|_| |_|_|\__\___/|_|  |_|_| |_|\__, |
-                                                                                __/ |
-                                                                               |___/ 
-"""
-    table = ConsoleTable(title=title,headers=["Name", "Age", "City"])
-    table.add_rows([
-        ["Alice", "30", "New York"],
-        ["Bob", "25", "Los Angeles"]
-    ])
-    input("Press Enter to add more rows...")
-    table.add_rows([
-        ["Christina", "29", "San Francisco"],
-        ["Dave", "32", "Houston"]
-    ])
-    input("Press Enter to add more rows...")
+#if __name__ == "__main__":
+#    title = """                                                       _ _             _
+#                                                      (_) |           (_)
+# ___  ___ _ __  ___  ___  _ __   _ __ ___   ___  _ __  _| |_ ___  _ __ _ _ __   __ _
+#/ __|/ _ \ '_ \/ __|/ _ \| '__| | '_ ` _ \ / _ \| '_ \| | __/ _ \| '__| | '_ \ / _` |
+#\__ \  __/ | | \__ \ (_) | |    | | | | | | (_) | | | | | || (_) | |  | | | | | (_| |
+#|___/\___|_| |_|___/\___/|_|    |_| |_| |_|\___/|_| |_|_|\__\___/|_|  |_|_| |_|\__, |
+#                                                                                __/ |
+#                                                                               |___/
+#"""
+#    table = ConsoleTable(title=title,headers=["Name", "Age", "City"])
+#    table.add_rows([
+#        ["Alice", "30", "New York"],
+#        ["Bob", "25", "Los Angeles"]
+#    ])
+#    input("Press Enter to add more rows...")
+#    table.add_rows([
+#        ["Christina", "29", "San Francisco"],
+#        ["Dave", "32", "Houston"]
+#    ])
+#    input("Press Enter to add more rows...")
