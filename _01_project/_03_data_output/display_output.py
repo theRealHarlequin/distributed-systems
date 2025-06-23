@@ -31,7 +31,7 @@ class Display:
                                                                                         __/ |
                                                                                        |___/ 
         """
-        headers = ['Sensor ID', 'Sensor Type', 'Frequency', 'Timestamp', ' Value', ' Unit', 'lower threshold',
+        headers = ['Sensor ID', 'Sensor Type', 'sample rate [ms]', 'Active', 'Timestamp', ' Value', ' Unit', 'lower threshold',
                    'upper threshold', 'status threshold']
         self._output_table: ConsoleTable = ConsoleTable(title=title, headers=headers)
         self._display_list:List[StatusDisplayItem] = []
@@ -50,6 +50,7 @@ class Display:
                     str_lst = []
                     for itm in self._display_list:
                         str_lst.append([str(itm.sensor_id), str(itm.type), str(itm.sample_freq),
+                                        'True' if itm.active == 1 else 'False',
                                         datetime.fromtimestamp(itm.timestamp/100).strftime("%Y-%m-%d %H:%M:%S"),
                                         conv_sig_value(value=itm.sig_value, factor=itm.factor/1000, offset=itm.offset/1000),
                                         conv_sensor_sig_unit_enum_2_str(itm.sig_unit), itm.lower_threshold,

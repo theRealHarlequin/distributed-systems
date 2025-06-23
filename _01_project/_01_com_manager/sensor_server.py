@@ -151,7 +151,7 @@ class SensorServer:
             self._append_status_buffer(status=tmp_sensor_status)
             self.log.log(msg=f"[DATA_TRANSFER] Received Sensor Data of {tmp_sensor_status}", level=logging.INFO)
 
-    async def _display_push(self):
+    async def _analyse_push(self):
         while True:
             await asyncio.sleep(2)
             tmp_lst: List[SensorStatus] = self.push_send_output[:]
@@ -163,7 +163,7 @@ class SensorServer:
                 self.data_structure.factor = itm.factor
                 self.data_structure.offset = itm.offset
                 self.data_structure.sig_unit = itm.sig_unit
-                self.data_structure.active = 1 if itm.id in self._active_subscriptions else 0
+                self.data_structure.active = 1 if str(itm.id) in self._active_subscriptions else 0
 
                 await self.data_push_socket.send("2".encode() + b" " + self.data_structure.SerializeToString())
                 self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
@@ -171,7 +171,7 @@ class SensorServer:
     async def run_server(self):
         self.log.log(msg="[SERVER] Sensor Server running ...", level=logging.INFO)
         await asyncio.gather(
-            self._display_push(),
+            self._analyse_push(),
             self._sensor_sub_listener(),
             self._sensor_rep_responder(),
             self._control_rep_responder()
