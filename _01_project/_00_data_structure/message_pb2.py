@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\"\x94\x01\n\x0bsens_status\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\x12\n\n\x02id\x18\x02 \x01(\r\x12\x11\n\tsig_value\x18\x03 \x01(\x05\x12\x0e\n\x06\x66\x61\x63tor\x18\x04 \x01(\r\x12\x0e\n\x06offset\x18\x05 \x01(\r\x12#\n\x08sig_unit\x18\x06 \x01(\x0e\x32\x11.sens_signal_unit\x12\x0e\n\x06\x61\x63tive\x18\x07 \x01(\r\"O\n\rsens_com_join\x12\x0f\n\x07\x63onnect\x18\x01 \x01(\r\x12\x18\n\x04type\x18\x02 \x01(\x0e\x32\n.sens_type\x12\x13\n\x0bsample_freq\x18\x03 \x01(\r\"\'\n\x12sens_com_join_resp\x12\x11\n\tsensor_id\x18\x01 \x01(\r\"\xb2\x01\n\nctrl_RSDBI\x12\x1c\n\x02id\x18\x01 \x01(\x0e\x32\x10.ctrl_request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"\xb7\x01\n\x0f\x63trl_RSDBI_resp\x12\x1c\n\x02id\x18\x01 \x01(\x0e\x32\x10.ctrl_request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"\x1f\n\x0f\x64isp_trans_done\x12\x0c\n\x04\x64one\x18\x01 \x01(\r\"\xb5\x02\n\x12\x64isp_sensor_status\x12\x11\n\tsensor_id\x18\x01 \x01(\r\x12\x13\n\x0bsample_freq\x18\x02 \x01(\r\x12\x18\n\x04type\x18\x03 \x01(\x0e\x32\n.sens_type\x12\x0e\n\x06\x61\x63tive\x18\x04 \x01(\r\x12\x11\n\ttimestamp\x18\x05 \x01(\x04\x12\x11\n\tsig_value\x18\x06 \x01(\x05\x12\x0e\n\x06\x66\x61\x63tor\x18\x07 \x01(\r\x12\x0e\n\x06offset\x18\x08 \x01(\r\x12#\n\x08sig_unit\x18\t \x01(\x0e\x32\x11.sens_signal_unit\x12\x17\n\x0flower_threshold\x18\n \x01(\r\x12\x17\n\x0fupper_threshold\x18\x0b \x01(\r\x12\x30\n\x10threshold_status\x18\x0c \x01(\x0e\x32\x16.disp_threshold_status*\xa1\x01\n\x0f\x63trl_request_id\x12\x15\n\x11GET_SENSOR_MAX_ID\x10\x00\x12\x19\n\x15UNSUBSCRIBE_SENSOR_ID\x10\x01\x12\x17\n\x13SUBSCRIBE_SENSOR_ID\x10\x02\x12\x17\n\x13SET_LOWER_THRESHOLD\x10\x03\x12\x17\n\x13SET_UPPER_THRESHOLD\x10\x04\x12\x11\n\rDISPLAY_GRAPH\x10\x05*\x91\x01\n\x10sens_signal_unit\x12\x14\n\x10UNIT_UNSPECIFIED\x10\x00\x12\x14\n\x10UNIT_TEMP_KELVIN\x10\x01\x12\x15\n\x11UNIT_TEMP_CELSIUS\x10\x02\x12\x11\n\rUNIT_PRES_BAR\x10\x03\x12\x14\n\x10UNIT_PRES_PASCAL\x10\x04\x12\x11\n\rUNIT_ROTA_RPM\x10\x05*G\n\tsens_type\x12\x14\n\x10TYPE_TEMPERATURE\x10\x00\x12\x11\n\rTYPE_PRESSURE\x10\x01\x12\x11\n\rTYPE_ROTATION\x10\x02*f\n\x15\x64isp_threshold_status\x12\x11\n\rNO_EVALUATION\x10\x00\x12\x15\n\x11VALUE_INSIDE_AREA\x10\x01\x12\x11\n\rVALUE_TO_HIGH\x10\x02\x12\x10\n\x0cVALUE_TO_LOW\x10\x03\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmessage.proto\"\x94\x01\n\x0bsens_status\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\x12\n\n\x02id\x18\x02 \x01(\r\x12\x11\n\tsig_value\x18\x03 \x01(\x05\x12\x0e\n\x06\x66\x61\x63tor\x18\x04 \x01(\r\x12\x0e\n\x06offset\x18\x05 \x01(\r\x12#\n\x08sig_unit\x18\x06 \x01(\x0e\x32\x11.sens_signal_unit\x12\x0e\n\x06\x61\x63tive\x18\x07 \x01(\r\"O\n\rsens_com_join\x12\x0f\n\x07\x63onnect\x18\x01 \x01(\r\x12\x18\n\x04type\x18\x02 \x01(\x0e\x32\n.sens_type\x12\x13\n\x0bsample_freq\x18\x03 \x01(\r\"\'\n\x12sens_com_join_resp\x12\x11\n\tsensor_id\x18\x01 \x01(\r\"\xb2\x01\n\nctrl_RSDBI\x12\x1c\n\x02id\x18\x01 \x01(\x0e\x32\x10.ctrl_request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"\xb7\x01\n\x0f\x63trl_RSDBI_resp\x12\x1c\n\x02id\x18\x01 \x01(\x0e\x32\x10.ctrl_request_id\x12\x0f\n\x07value_0\x18\x02 \x01(\r\x12\x0f\n\x07value_1\x18\x03 \x01(\r\x12\x0f\n\x07value_2\x18\x04 \x01(\r\x12\x0f\n\x07value_3\x18\x05 \x01(\r\x12\x0f\n\x07value_4\x18\x06 \x01(\r\x12\x0f\n\x07value_5\x18\x07 \x01(\r\x12\x0f\n\x07value_6\x18\x08 \x01(\r\x12\x0f\n\x07value_7\x18\t \x01(\r\"b\n\x16\x63trl_request_transfert\x12\x11\n\tsensor_id\x18\x01 \x01(\r\x12&\n\x0crequest_type\x18\x02 \x01(\x0e\x32\x10.ctrl_request_id\x12\r\n\x05value\x18\x03 \x01(\r\"\x1f\n\x0f\x64isp_trans_done\x12\x0c\n\x04\x64one\x18\x01 \x01(\r\"\xb5\x02\n\x12\x64isp_sensor_status\x12\x11\n\tsensor_id\x18\x01 \x01(\r\x12\x13\n\x0bsample_freq\x18\x02 \x01(\r\x12\x18\n\x04type\x18\x03 \x01(\x0e\x32\n.sens_type\x12\x0e\n\x06\x61\x63tive\x18\x04 \x01(\r\x12\x11\n\ttimestamp\x18\x05 \x01(\x04\x12\x11\n\tsig_value\x18\x06 \x01(\x05\x12\x0e\n\x06\x66\x61\x63tor\x18\x07 \x01(\r\x12\x0e\n\x06offset\x18\x08 \x01(\r\x12#\n\x08sig_unit\x18\t \x01(\x0e\x32\x11.sens_signal_unit\x12\x17\n\x0flower_threshold\x18\n \x01(\r\x12\x17\n\x0fupper_threshold\x18\x0b \x01(\r\x12\x30\n\x10threshold_status\x18\x0c \x01(\x0e\x32\x16.disp_threshold_status*\xa1\x01\n\x0f\x63trl_request_id\x12\x15\n\x11GET_SENSOR_MAX_ID\x10\x00\x12\x19\n\x15UNSUBSCRIBE_SENSOR_ID\x10\x01\x12\x17\n\x13SUBSCRIBE_SENSOR_ID\x10\x02\x12\x17\n\x13SET_LOWER_THRESHOLD\x10\x03\x12\x17\n\x13SET_UPPER_THRESHOLD\x10\x04\x12\x11\n\rDISPLAY_GRAPH\x10\x05*\x91\x01\n\x10sens_signal_unit\x12\x14\n\x10UNIT_UNSPECIFIED\x10\x00\x12\x14\n\x10UNIT_TEMP_KELVIN\x10\x01\x12\x15\n\x11UNIT_TEMP_CELSIUS\x10\x02\x12\x11\n\rUNIT_PRES_BAR\x10\x03\x12\x14\n\x10UNIT_PRES_PASCAL\x10\x04\x12\x11\n\rUNIT_ROTA_RPM\x10\x05*G\n\tsens_type\x12\x14\n\x10TYPE_TEMPERATURE\x10\x00\x12\x11\n\rTYPE_PRESSURE\x10\x01\x12\x11\n\rTYPE_ROTATION\x10\x02*f\n\x15\x64isp_threshold_status\x12\x11\n\rNO_EVALUATION\x10\x00\x12\x15\n\x11VALUE_INSIDE_AREA\x10\x01\x12\x11\n\rVALUE_TO_HIGH\x10\x02\x12\x10\n\x0cVALUE_TO_LOW\x10\x03\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -21,14 +21,14 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'message_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _globals['_CTRL_REQUEST_ID']._serialized_start=1003
-  _globals['_CTRL_REQUEST_ID']._serialized_end=1164
-  _globals['_SENS_SIGNAL_UNIT']._serialized_start=1167
-  _globals['_SENS_SIGNAL_UNIT']._serialized_end=1312
-  _globals['_SENS_TYPE']._serialized_start=1314
-  _globals['_SENS_TYPE']._serialized_end=1385
-  _globals['_DISP_THRESHOLD_STATUS']._serialized_start=1387
-  _globals['_DISP_THRESHOLD_STATUS']._serialized_end=1489
+  _globals['_CTRL_REQUEST_ID']._serialized_start=1103
+  _globals['_CTRL_REQUEST_ID']._serialized_end=1264
+  _globals['_SENS_SIGNAL_UNIT']._serialized_start=1267
+  _globals['_SENS_SIGNAL_UNIT']._serialized_end=1412
+  _globals['_SENS_TYPE']._serialized_start=1414
+  _globals['_SENS_TYPE']._serialized_end=1485
+  _globals['_DISP_THRESHOLD_STATUS']._serialized_start=1487
+  _globals['_DISP_THRESHOLD_STATUS']._serialized_end=1589
   _globals['_SENS_STATUS']._serialized_start=18
   _globals['_SENS_STATUS']._serialized_end=166
   _globals['_SENS_COM_JOIN']._serialized_start=168
@@ -39,8 +39,10 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_CTRL_RSDBI']._serialized_end=469
   _globals['_CTRL_RSDBI_RESP']._serialized_start=472
   _globals['_CTRL_RSDBI_RESP']._serialized_end=655
-  _globals['_DISP_TRANS_DONE']._serialized_start=657
-  _globals['_DISP_TRANS_DONE']._serialized_end=688
-  _globals['_DISP_SENSOR_STATUS']._serialized_start=691
-  _globals['_DISP_SENSOR_STATUS']._serialized_end=1000
+  _globals['_CTRL_REQUEST_TRANSFERT']._serialized_start=657
+  _globals['_CTRL_REQUEST_TRANSFERT']._serialized_end=755
+  _globals['_DISP_TRANS_DONE']._serialized_start=757
+  _globals['_DISP_TRANS_DONE']._serialized_end=788
+  _globals['_DISP_SENSOR_STATUS']._serialized_start=791
+  _globals['_DISP_SENSOR_STATUS']._serialized_end=1100
 # @@protoc_insertion_point(module_scope)

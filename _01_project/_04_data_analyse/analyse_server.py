@@ -1,8 +1,8 @@
-import logging, argparse
+import logging, argparse, time
 from typing import List
 from logger import Logger
 from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
-                                           conv_sensor_type_str_2_enum)
+                                           conv_sensor_type_str_2_enum, conv_ctrl_type_enum_2_str)
 from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
 from _01_project._00_data_structure import message_pb2 as nc_msg
 import asyncio, zmq, sys, zmq.asyncio
@@ -31,6 +31,7 @@ class AnalyseServer:
         self.sens_reg_structure = nc_msg.sens_com_join()
         self.disp_trans_done = nc_msg.disp_trans_done()
         self.disp_disp_sensor_status = nc_msg.disp_sensor_status()
+        self.ctrl_trans_structure = nc_msg.ctrl_request_transfert()
 
         # Attributes:
         self.sensor_database: List[SensorItem] = []
@@ -62,6 +63,23 @@ class AnalyseServer:
                                  f" {conv_sensor_sig_unit_enum_2_str(tmp_status.sig_unit)}", level=logging.INFO)
 
                 self._append_status_to_sensor(status=tmp_status, active=1 if data.active == 1 else 0)
+            elif topic == b'3':
+                self.ctrl_trans_structure.ParseFromString(raw_data)
+                data = self.ctrl_trans_structure
+                if data.request_type == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
+                    for sensor in self.sensor_database:
+                        if sensor.id == data.sensor_id:
+                            sensor.lower_threshold = data.value
+                            self.log.log(msg=f"[CTRL_TRANS] Received Set lower threshold of Sensor "
+                                             f"{data.sensor_id} to {data.value}", level=logging.INFO)
+                            pass
+                elif data.request_type == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
+                    for sensor in self.sensor_database:
+                        if sensor.id == data.sensor_id:
+                            sensor.upper_threshold = data.value
+                            self.log.log(msg=f"[CTRL_TRANS] Received Set upper threshold of Sensor "
+                                             f"{data.sensor_id} to {data.value}", level=logging.INFO)
+                            pass
 
     async def _display_push_data(self):
         while True:

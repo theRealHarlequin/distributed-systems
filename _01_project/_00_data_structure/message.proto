@@ -79,6 +79,13 @@ message ctrl_RSDBI_resp {
 	uint32 value_7 =9;
 }
 
+// Sensor Server -> Analyse Server
+message ctrl_request_transfert{
+	uint32 sensor_id = 1;
+  ctrl_request_id request_type = 2;
+  uint32 value = 3;
+}
+
 // Analyse Server <-> Display Communication (OUTPUT)
 message disp_trans_done{
 	uint32 done = 1;

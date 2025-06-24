@@ -41,6 +41,7 @@ class SensorServer:
         self.ctrl_request_structure = nc_msg.ctrl_RSDBI()
         self.ctrl_response_structure = nc_msg.ctrl_RSDBI_resp()
         self.data_structure = nc_msg.sens_status()
+        self.ctrl_trans_structure = nc_msg.ctrl_request_transfert()
 
         # Attributes:
         self.push_send_output: List[SensorStatus] = []
@@ -137,6 +138,28 @@ class SensorServer:
                         level=logging.ERROR)
 
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
+
+            elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
+                #self.ctrl_response_structure.id = self.ctrl_request_structure.id
+                #self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
+                #self.ctrl_response_structure.value_1 = self.ctrl_request_structure.value_1
+                #self.ctrl_response_structure.value_2 = 0
+                #self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
+
+                self.ctrl_trans_structure.sensor_id = self.ctrl_request_structure.value_0
+                self.ctrl_trans_structure.request_type = self.ctrl_request_structure.id
+                self.ctrl_trans_structure.value = self.ctrl_request_structure.value_1
+
+                await self.data_push_socket.send("3".encode() + b" " + self.ctrl_trans_structure.SerializeToString())
+                self.log.log(msg=f"[CTRL_TRANSFER] Pass Control Request", level=logging.INFO)
+
+            elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
+                self.ctrl_trans_structure.sensor_id = self.ctrl_request_structure.value_0
+                self.ctrl_trans_structure.request_type = self.ctrl_request_structure.id
+                self.ctrl_trans_structure.value = self.ctrl_request_structure.value_1
+
+                await self.data_push_socket.send("3".encode() + b" " + self.ctrl_trans_structure.SerializeToString())
+                self.log.log(msg=f"[CTRL_TRANSFER] Pass Control Request", level=logging.INFO)
 
     async def _sensor_sub_listener(self):
         while True:
