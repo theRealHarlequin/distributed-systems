@@ -68,27 +68,3 @@ class ConsoleTable:
         for row in self.rows:
             print(self._make_row(row))
             print(separator)
-
-
-# Example usage
-#if __name__ == "__main__":
-#    title = """                                                       _ _             _
-#                                                      (_) |           (_)
-# ___  ___ _ __  ___  ___  _ __   _ __ ___   ___  _ __  _| |_ ___  _ __ _ _ __   __ _
-#/ __|/ _ \ '_ \/ __|/ _ \| '__| | '_ ` _ \ / _ \| '_ \| | __/ _ \| '__| | '_ \ / _` |
-#\__ \  __/ | | \__ \ (_) | |    | | | | | | (_) | | | | | || (_) | |  | | | | | (_| |
-#|___/\___|_| |_|___/\___/|_|    |_| |_| |_|\___/|_| |_|_|\__\___/|_|  |_|_| |_|\__, |
-#                                                                                __/ |
-#                                                                               |___/
-#"""
-#    table = ConsoleTable(title=title,headers=["Name", "Age", "City"])
-#    table.add_rows([
-#        ["Alice", "30", "New York"],
-#        ["Bob", "25", "Los Angeles"]
-#    ])
-#    input("Press Enter to add more rows...")
-#    table.add_rows([
-#        ["Christina", "29", "San Francisco"],
-#        ["Dave", "32", "Houston"]
-#    ])
-#    input("Press Enter to add more rows...")
