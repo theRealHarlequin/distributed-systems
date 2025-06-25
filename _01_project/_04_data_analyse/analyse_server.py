@@ -97,21 +97,24 @@ class AnalyseServer:
                         self.disp_disp_sensor_status.factor = data.factor
                         self.disp_disp_sensor_status.offset = data.offset
                         self.disp_disp_sensor_status.sig_unit = data.sig_unit
-                        if sensor.type == nc_msg.sens_type.TYPE_ROTATION:
-                            enc_sig_val = conv_sig_value(value=data.sig_value, factor=data.factor, offset=data.offset)
-                            self.disp_disp_sensor_status.lower_threshold = sensor.lower_threshold
-                            self.disp_disp_sensor_status.upper_threshold = sensor.upper_threshold
-                            if enc_sig_val < sensor.lower_threshold and isinstance(sensor.lower_threshold, int):
-                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_LOW
+                        enc_sig_val = conv_sig_value(value=data.sig_value, factor=data.factor, offset=data.offset)/1000
 
-                            elif enc_sig_val > sensor.upper_threshold and isinstance(sensor.upper_threshold, int):
-                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_HIGH
+                        self.disp_disp_sensor_status.lower_threshold = sensor.lower_threshold if isinstance(sensor.lower_threshold, int) else 0
+                        self.disp_disp_sensor_status.upper_threshold = sensor.upper_threshold if isinstance(sensor.upper_threshold, int) else 0
 
-                            elif not isinstance(sensor.upper_threshold, int) and not isinstance(sensor.lower_threshold, int):
-                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.NO_EVALUATION
+                        if (enc_sig_val < self.disp_disp_sensor_status.lower_threshold
+                                and self.disp_disp_sensor_status.lower_threshold != 0):
+                            self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_LOW
 
-                            else:
-                                self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_INSIDE_AREA
+                        elif (enc_sig_val > self.disp_disp_sensor_status.upper_threshold
+                              and self.disp_disp_sensor_status.upper_threshold != 0):
+                            self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_HIGH
+
+                        elif self.disp_disp_sensor_status.lower_threshold != 0 and self.disp_disp_sensor_status.upper_threshold != 0:
+                            self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_INSIDE_AREA
+
+                        else:
+                            self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.NO_EVALUATION
 
                         await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
                 self.disp_trans_done.done = 1

@@ -44,6 +44,7 @@ class Display:
             # Wait for next request from client
             message = await self.pull_socket.recv()
             topic, raw_data = message.split(b" ", 1)  # topic: 1 -> number of sensors | 2 -> Data
+
             if topic == b'1':
                 self.input_disp_trans_done.ParseFromString(raw_data)
                 if self.input_disp_trans_done.done == 1:
@@ -54,10 +55,11 @@ class Display:
                                         datetime.fromtimestamp(itm.timestamp/100).strftime("%Y-%m-%d %H:%M:%S"),
                                         conv_sig_value(value=itm.sig_value, factor=itm.factor/1000, offset=itm.offset/1000),
                                         conv_sensor_sig_unit_enum_2_str(itm.sig_unit), itm.lower_threshold,
-                                        itm.upper_threshold, conv_threshold_status_enum_2_str(itm.threshold_status)])
+                                        itm.upper_threshold, itm.threshold_status])
                     self._output_table.add_rows(str_lst)
                     self._output_table.display()
                     self._display_list.clear()
+
             elif topic == b'2':
                 self.input_disp_sensor_status.ParseFromString(raw_data)
                 data = self.input_disp_sensor_status
@@ -65,10 +67,9 @@ class Display:
                                                             type=conv_sensor_type_enum_2_str(data.type),
                                                             active=data.active, timestamp=data.timestamp, sig_value=data.sig_value,
                                                             factor=data.factor, offset=data.offset, sig_unit=data.sig_unit,
-                                                            lower_threshold=str(data.lower_threshold) if data.lower_threshold > 0 else "",
-                                                            upper_threshold=str(data.upper_threshold) if data.upper_threshold > 0 else "",
+                                                            lower_threshold=str(data.lower_threshold) if data.lower_threshold != 0 else "",
+                                                            upper_threshold=str(data.upper_threshold) if data.upper_threshold != 0 else "",
                                                             threshold_status=conv_threshold_status_enum_2_str(data.threshold_status)))
-
 
     async def run_server(self):
         await asyncio.gather(

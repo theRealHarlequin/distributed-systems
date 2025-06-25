@@ -63,10 +63,10 @@ def conv_ctrl_type_enum_2_str(enum_value: enum):
         system = "unsubscripe sensor"
     elif enum_value == nc_msg.ctrl_request_id.SUBSCRIBE_SENSOR_ID:
         system = "subscripe new sensor"
-    elif enum_value == nc_msg.ctrl_request_id.GET_ALERT_THRESHOLD:
-        system = "get current threshold of sensor"
-    elif enum_value == nc_msg.ctrl_request_id.SET_ALERT_THRESHOLD:
-        system = "set current threshold of sensor"
+    elif enum_value == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
+        system = "set lower threshold of sensor"
+    elif enum_value == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
+        system = "set upper threshold of sensor"
     elif enum_value == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
         system = "display graph in seperate window"
     return system

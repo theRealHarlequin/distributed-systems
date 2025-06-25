@@ -135,6 +135,19 @@ class sim_control:
 
     def _change_threshold_value(self):
         print("Running - Change Threshold Value...")
+        sensor_id = self._get_validated_input(prompt=f"Sensor ID to set threshold value: ", min_value=1, max_value=100)
+        type = self._get_validated_input(prompt=f"Which Limit has to be set? (lower -> 1, upper -> 2): ", min_value=1, max_value=2)
+        value = self._get_validated_input(prompt=f"Threshold value (1 ... 10'000): ", min_value=1, max_value=10000)
+
+        if type == 1:
+            self._control_communication(req_id=nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD, value_0=sensor_id, value_1=value)
+            print(f"Set threshold: type - lower_threshold, sensor id - {sensor_id}, value - {value}")
+        elif type == 2:
+            self._control_communication(req_id=nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD, value_0=sensor_id, value_1=value)
+            print(f"Set threshold: type - upper_threshold, sensor id - {sensor_id}, value - {value}")
+        else:
+            print(f"Limit type is not valid: {type}")
+
         input("Press Enter to return to the menu.")
 
     def _exit_program(self):
@@ -196,12 +209,24 @@ class sim_control:
             else:
                 return None
 
-        elif req_id == nc_msg.ctrl_request_id.GET_ALERT_THRESHOLD:
-            pass
-        elif req_id == nc_msg.ctrl_request_id.SET_ALERT_THRESHOLD:
-            pass
+        elif req_id == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD or req_id == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
+            self.ctrl_req_structure.value_0 = value_0
+            self.ctrl_req_structure.value_1 = value_1
+            self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
+
+            # Receive Response
+            message = self.ctrl_req_socket.recv()
+            self.ctrl_resp_structure.ParseFromString(message)
+
+            if (self.ctrl_resp_structure.id == req_id and self.ctrl_resp_structure.value_0 == value_0 and
+                    self.ctrl_resp_structure.value_1 == value_1 and self.ctrl_resp_structure.value_2 == 1):
+                return 1
+            else:
+                return None
+
         elif req_id == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
             pass
+
         self.ctrl_req_socket.send(self.ctrl_resp_structure.SerializeToString())
 
     def main_menu(self):

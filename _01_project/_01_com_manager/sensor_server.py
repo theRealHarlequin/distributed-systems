@@ -140,11 +140,11 @@ class SensorServer:
                 self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
             elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
-                #self.ctrl_response_structure.id = self.ctrl_request_structure.id
-                #self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
-                #self.ctrl_response_structure.value_1 = self.ctrl_request_structure.value_1
-                #self.ctrl_response_structure.value_2 = 0
-                #self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
+                self.ctrl_response_structure.id = self.ctrl_request_structure.id
+                self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
+                self.ctrl_response_structure.value_1 = self.ctrl_request_structure.value_1
+                self.ctrl_response_structure.value_2 = 1
+                self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
 
                 self.ctrl_trans_structure.sensor_id = self.ctrl_request_structure.value_0
                 self.ctrl_trans_structure.request_type = self.ctrl_request_structure.id
@@ -154,6 +154,12 @@ class SensorServer:
                 self.log.log(msg=f"[CTRL_TRANSFER] Pass Control Request", level=logging.INFO)
 
             elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
+                self.ctrl_response_structure.id = self.ctrl_request_structure.id
+                self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
+                self.ctrl_response_structure.value_1 = self.ctrl_request_structure.value_1
+                self.ctrl_response_structure.value_2 = 1
+                self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
+
                 self.ctrl_trans_structure.sensor_id = self.ctrl_request_structure.value_0
                 self.ctrl_trans_structure.request_type = self.ctrl_request_structure.id
                 self.ctrl_trans_structure.value = self.ctrl_request_structure.value_1
