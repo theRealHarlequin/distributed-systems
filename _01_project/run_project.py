@@ -37,6 +37,7 @@ class sim_control:
                              ("Unsubscribe sensor from the control system.", self._unsubscribe_sensor),
                              ("Subscribe sensor from the control system.", self._subscribe_sensor),
                              ("Change the threshold value.", self._change_threshold_value),
+                             ("Display Plot.", self._display_plot),
                              ("Exit / Close Simulation.", self._exit_program)]
 
     def start_new_subprocess(self, script:str):
@@ -150,6 +151,15 @@ class sim_control:
 
         input("Press Enter to return to the menu.")
 
+    def _display_plot(self):
+        print("Running - Display Plot...")
+        sensor_id = self._get_validated_input(prompt=f"Sensor ID to display plot: ", min_value=1, max_value=100)
+
+        self._control_communication(req_id=nc_msg.ctrl_request_id.DISPLAY_GRAPH, value_0=sensor_id)
+        print(f"Display Plots: sensor id - {sensor_id}")
+
+        input("Press Enter to return to the menu.")
+
     def _exit_program(self):
         print("Exiting program & killing all processes. Goodbye!")
 
@@ -225,9 +235,21 @@ class sim_control:
                 return None
 
         elif req_id == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
-            pass
+            # Send Request
+            self.ctrl_req_structure.value_0 = value_0
+            self.ctrl_req_socket.send(self.ctrl_req_structure.SerializeToString())
 
-        self.ctrl_req_socket.send(self.ctrl_resp_structure.SerializeToString())
+            # Receive Response
+            message = self.ctrl_req_socket.recv()
+            self.ctrl_resp_structure.ParseFromString(message)
+
+            if (
+                    self.ctrl_resp_structure.id == req_id and self.ctrl_resp_structure.value_0 == value_0 and self.ctrl_resp_structure.value_1 == 1):
+                return 1
+            else:
+                return None
+
+        # self.ctrl_req_socket.send(self.ctrl_resp_structure.SerializeToString())
 
     def main_menu(self):
         """Display the main menu and handle user input."""

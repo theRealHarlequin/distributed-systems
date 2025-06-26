@@ -167,6 +167,19 @@ class SensorServer:
                 await self.data_push_socket.send("3".encode() + b" " + self.ctrl_trans_structure.SerializeToString())
                 self.log.log(msg=f"[CTRL_TRANSFER] Pass Control Request", level=logging.INFO)
 
+            elif self.ctrl_request_structure.id == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
+                self.ctrl_response_structure.id = self.ctrl_request_structure.id
+                self.ctrl_response_structure.value_0 = self.ctrl_request_structure.value_0
+                self.ctrl_response_structure.value_1 = 1
+                self.ctrl_rep_socket.send(self.ctrl_response_structure.SerializeToString())
+
+                self.ctrl_trans_structure.sensor_id = self.ctrl_request_structure.value_0
+                self.ctrl_trans_structure.request_type = self.ctrl_request_structure.id
+                self.ctrl_trans_structure.value = 0
+
+                await self.data_push_socket.send("3".encode() + b" " + self.ctrl_trans_structure.SerializeToString())
+                self.log.log(msg=f"[CTRL_TRANSFER] Pass Control Request", level=logging.INFO)
+
     async def _sensor_sub_listener(self):
         while True:
             message = await self.sens_sub_socket.recv()

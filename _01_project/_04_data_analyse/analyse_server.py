@@ -1,10 +1,14 @@
 import logging, argparse, time
 from typing import List
+
+from matplotlib.pyplot import semilogx
+
 from logger import Logger
 from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
                                            conv_sensor_type_str_2_enum, conv_ctrl_type_enum_2_str)
 from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
 from _01_project._00_data_structure import message_pb2 as nc_msg
+from _01_project._03_data_output.display_plot import generate_plot
 import asyncio, zmq, sys, zmq.asyncio
 
 class AnalyseServer:
@@ -79,6 +83,23 @@ class AnalyseServer:
                             sensor.upper_threshold = data.value
                             self.log.log(msg=f"[CTRL_TRANS] Received Set upper threshold of Sensor "
                                              f"{data.sensor_id} to {data.value}", level=logging.INFO)
+                            pass
+
+                elif data.request_type == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
+                    for sensor in self.sensor_database:
+                        if sensor.id == data.sensor_id:
+                            # ToDo Display Plots
+                            if len(sensor.data) > 0 and sensor.sample_freq > 0:
+                                tmp = {getattr(obj, 'timestamp'): getattr(obj, 'data') for obj in sensor.data}
+                                generate_plot(data={getattr(obj, 'timestamp'): getattr(obj, 'data') for obj in sensor.data},
+                                              stats={'Sensor ID': sensor.id,
+                                                    'Sensor Type': sensor.type,
+                                                    'Active': 'True' if sensor.active else 'False',
+                                                    'Sampling Rate': sensor.sample_freq,
+                                                    'Start of Measurement': min(sensor.data, key=lambda x: x['timestamp'])['timestamp'],
+                                                    'End of Measurement': max(sensor.data, key=lambda x: x['timestamp'])['timestamp'],
+                                                    'Data Points': len(sensor.data)
+                                                    })
                             pass
 
     async def _display_push_data(self):
