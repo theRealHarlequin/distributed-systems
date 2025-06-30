@@ -40,8 +40,8 @@ Sensor <|-- PresSensor
 Sensor <|-- RotSensor
 Sensor <|-- AngSensor
 
-SensorServer "1" -left- "*" Sensor : manages
-SensorServer "1" -- "1" AnalyseServer : communicate
+SensorServer "1" -left- "*" Sensor : manages /\nreport
+SensorServer "1" -- "1" AnalyseServer : report
 AnalyseServer "1" -- "1" Display: control
 sim_control "1" -- "*" Sensor : generate
 sim_control "1" -- "1" SensorServer : control_actions

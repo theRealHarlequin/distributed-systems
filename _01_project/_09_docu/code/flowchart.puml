@@ -6,7 +6,7 @@ participant "SensorServer" as SensorServer
 participant "AnalyseServer" as AnalyseServer
 participant "Display" as Display
 
-User -> SimControl: start simulation
+User --> SimControl: start simulation
 activate SimControl
 
 SimControl -> SensorServer: start_new_subprocess()
@@ -15,47 +15,56 @@ SimControl -> AnalyseServer: start_new_subprocess()
 activate AnalyseServer
 SimControl -> Display: start_new_subprocess()
 activate Display
-
-User -> SimControl: add new sensor
-SimControl -> Sensor: create and start
-activate Sensor
-
-Sensor -> SensorServer: connect (REQ)
-SensorServer -> SensorServer : generate Sensor ID
-SensorServer -> AnalyseServer: register new sensor (PUSH)
-SensorServer --> Sensor: connection response (REP)
-
-loop Sensor active
-    Sensor -> Sensor: generate value
-    Sensor -> SensorServer: send data (PUB)
+loop
     SensorServer -> AnalyseServer: forward sensor data (PUSH)
     AnalyseServer -> AnalyseServer: process data
     AnalyseServer -> Display: send processed data (PUSH)
     Display -> Display: update display
 end
 
-User -> SimControl: unsubscribe sensor
+User --> SimControl: add new sensor
+SimControl -> Sensor: create and start
+activate Sensor
+
+Sensor -> SensorServer: connect (REQ)
+SensorServer -> SensorServer : generate Sensor ID
+SensorServer -> AnalyseServer: register new sensor (PUSH)
+SensorServer -> Sensor: connection response (REP)
+
+loop Sensor active
+    Sensor -> Sensor: generate value
+    Sensor -> SensorServer: send data (PUB)
+end
+
+
+
+User --> SimControl: unsubscribe sensor
 SimControl -> SensorServer: unsubscribe request (REQ)
+SensorServer -> SensorServer: deactivate subscribe
 SensorServer -> AnalyseServer: update sensor status
-SensorServer --> SimControl: unsubscribe response (REP)
+AnalyseServer -> AnalyseServer: document unsubscribe\nin database
+SensorServer -> SimControl: unsubscribe response (REP)
 
-User -> SimControl: subscribe sensor
+User --> SimControl: subscribe sensor
 SimControl -> SensorServer: subscribe request (REQ)
+SensorServer -> SensorServer: ctivate subscribe
 SensorServer -> AnalyseServer: update sensor status
-SensorServer --> SimControl: subscribe response (REP)
+AnalyseServer -> AnalyseServer: document unsubscribe\nin database
+SensorServer -> SimControl: subscribe response (REP)
 
-User -> SimControl: change threshold
+User --> SimControl: change threshold
 SimControl -> SensorServer: set threshold request (REQ)
 SensorServer -> AnalyseServer: update threshold
-SensorServer --> SimControl: set threshold response (REP)
+AnalyseServer -> AnalyseServer: save threshold value
+SensorServer -> SimControl: set threshold response (REP)
 
-User -> SimControl: display plot
+User --> SimControl: display plot
 SimControl -> SensorServer: display plot request (REQ)
 SensorServer -> AnalyseServer: generate plot
 AnalyseServer -> AnalyseServer: create plot
-SensorServer --> SimControl: display plot response (REP)
+SensorServer -> SimControl: display plot response (REP)
 
-User -> SimControl: exit program
+User --> SimControl: exit program
 SimControl -> Sensor: terminate
 deactivate Sensor
 SimControl -> SensorServer: terminate
