@@ -59,6 +59,10 @@ class SensorStatus:
         """Gets the signal unit."""
         return self._sig_unit
 
+    @property
+    def encoded_value(self):
+        return (self.factor * self.sig_value + self.offset) / 1000
+
     def __str__(self):
         return (f"Sensor-ID {self.id}: TimeStamp: {dt.fromtimestamp(self.timestamp / 100)} ({self.timestamp}), "
                f"Factor: {self.factor}, Offset: {self.offset}, signal_value: {self.sig_value} - "

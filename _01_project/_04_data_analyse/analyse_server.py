@@ -1,8 +1,6 @@
 import logging, argparse, time
 from typing import List
 
-from matplotlib.pyplot import semilogx
-
 from logger import Logger
 from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
                                            conv_sensor_type_str_2_enum, conv_ctrl_type_enum_2_str)
@@ -90,14 +88,13 @@ class AnalyseServer:
                         if sensor.id == data.sensor_id:
                             # ToDo Display Plots
                             if len(sensor.data) > 0 and sensor.sample_freq > 0:
-                                tmp = {getattr(obj, 'timestamp'): getattr(obj, 'data') for obj in sensor.data}
-                                generate_plot(data={getattr(obj, 'timestamp'): getattr(obj, 'data') for obj in sensor.data},
+                                generate_plot(data={getattr(obj, 'timestamp'): getattr(obj, 'encoded_value') for obj in sensor.data},
                                               stats={'Sensor ID': sensor.id,
                                                     'Sensor Type': sensor.type,
                                                     'Active': 'True' if sensor.active else 'False',
                                                     'Sampling Rate': sensor.sample_freq,
-                                                    'Start of Measurement': min(sensor.data, key=lambda x: x['timestamp'])['timestamp'],
-                                                    'End of Measurement': max(sensor.data, key=lambda x: x['timestamp'])['timestamp'],
+                                                    'Start of Measurement': min([obj.timestamp for obj in sensor.data][1:]),
+                                                    'End of Measurement': max([obj.timestamp for obj in sensor.data][1:]),
                                                     'Data Points': len(sensor.data)
                                                     })
                             pass
