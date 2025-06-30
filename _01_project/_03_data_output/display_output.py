@@ -1,11 +1,14 @@
-import logging, argparse
+import argparse, os, sys
+import asyncio, zmq, sys, zmq.asyncio
 from datetime import datetime
-from _01_project._03_data_output.console_table import ConsoleTable
 from typing import List
+
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+from _01_project._03_data_output.console_table import ConsoleTable
 from _01_project._00_data_structure.data_structure import StatusDisplayItem
 from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_threshold_status_enum_2_str, conv_sig_value, conv_sensor_sig_unit_enum_2_str
 from _01_project._00_data_structure import message_pb2 as nc_msg
-import asyncio, zmq, sys, zmq.asyncio
+
 
 class Display:
     def __init__(self):
@@ -53,7 +56,7 @@ class Display:
                         str_lst.append([str(itm.sensor_id), str(itm.type), str(itm.sample_freq),
                                         'True' if itm.active == 1 else 'False',
                                         datetime.fromtimestamp(itm.timestamp/100).strftime("%Y-%m-%d %H:%M:%S"),
-                                        conv_sig_value(value=itm.sig_value, factor=itm.factor/1000, offset=itm.offset/1000),
+                                        f"{conv_sig_value(value=itm.sig_value, factor=itm.factor, offset=itm.offset):.2f}",
                                         conv_sensor_sig_unit_enum_2_str(itm.sig_unit), itm.lower_threshold,
                                         itm.upper_threshold, itm.threshold_status])
                     self._output_table.add_rows(str_lst)
@@ -66,7 +69,7 @@ class Display:
                 self._display_list.append(StatusDisplayItem(sensor_id=data.sensor_id, sample_freq=data.sample_freq,
                                                             type=conv_sensor_type_enum_2_str(data.type),
                                                             active=data.active, timestamp=data.timestamp, sig_value=data.sig_value,
-                                                            factor=data.factor, offset=data.offset, sig_unit=data.sig_unit,
+                                                            factor=data.factor/1000, offset=data.offset/1000, sig_unit=data.sig_unit,
                                                             lower_threshold=str(data.lower_threshold) if data.lower_threshold != 0 else "",
                                                             upper_threshold=str(data.upper_threshold) if data.upper_threshold != 0 else "",
                                                             threshold_status=conv_threshold_status_enum_2_str(data.threshold_status)))

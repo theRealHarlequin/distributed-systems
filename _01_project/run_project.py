@@ -1,6 +1,8 @@
-import logging, zmq, zmq.asyncio, asyncio, os, subprocess, time
-from _99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
-from _00_data_structure import message_pb2 as nc_msg
+import logging, zmq, zmq.asyncio, os, subprocess, sys
+
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+from _01_project._99_helper.helper import get_all_sensor_var, conv_sensor_type_enum_2_str
+from _01_project._00_data_structure import message_pb2 as nc_msg
 from logger import Logger
 
 # Get the directory of the current script
@@ -40,16 +42,40 @@ class sim_control:
                              ("Display Plot.", self._display_plot),
                              ("Exit / Close Simulation.", self._exit_program)]
 
-    def start_new_subprocess(self, script:str):
-        script_path = os.path.join(current_dir, script)  # Ensure correct path
+    def start_new_subprocess(self, script: str):
+        script_path = os.path.abspath(os.path.join(current_dir, script))  # Use absolute path
         log.log(msg=f"[SUBPROCESS] Starting: {script} at {script_path}", level=logging.INFO)
+
         if run_in_new_console:
-            p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
-                                 start_new_session=True, creationflags=subprocess.CREATE_NEW_CONSOLE )
+            # Use 'start' command to open a new console window
+            cmd = f'start cmd /c "python "{script_path}" --log-dir "{self.log_path}" & pause"'
+            p = subprocess.Popen(
+                cmd,
+                shell=True,
+                start_new_session=True
+            )
         else:
-            p = subprocess.Popen(["python", script_path, self.log_path])
+            p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path])
 
         processes.append(p)
+
+    # def start_new_subprocess(self, script:str):
+    #     script_path = os.path.join(current_dir, script)  # Ensure correct path
+    #     log.log(msg=f"[SUBPROCESS] Starting: {script} at {script_path}", level=logging.INFO)
+    #     if run_in_new_console:
+    #         p = subprocess.Popen(["python", script_path, "--log-dir", self.log_path],
+    #                              start_new_session=True, creationflags=subprocess.CREATE_NEW_CONSOLE )
+    #         cmd = f'python "{script_path}" --log-dir "{self.log_path}" & pause'
+    #
+    #         p = subprocess.Popen(
+    #            ["cmd.exe", "/c", cmd],
+    #             start_new_session=True,
+    #             creationflags=subprocess.CREATE_NEW_CONSOLE
+    #         )
+    #     else:
+    #         p = subprocess.Popen(["python", script_path, self.log_path])
+    #
+    #     processes.append(p)
 
     def _get_validated_input(self, prompt: str, min_value: int = None, max_value: int = None) -> int:
         while True:
@@ -80,9 +106,9 @@ class sim_control:
             sensor_list_str += f" {key} -> {sensor_type_dict[key]} |"
         print(f"Select Sensor Type: {sensor_list_str}")
 
-        inp_sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (0-2): ",
+        inp_sensor_type = self._get_validated_input(prompt=f"Sensor Type to create (0-{len(sensor_type_dict)-1}): ",
                                                 min_value=0,
-                                                max_value=2)
+                                                max_value=len(sensor_type_dict)-1)
         print(f"Selected SensorType: {conv_sensor_type_enum_2_str(inp_sensor_type)} - Creating sensor...")
         #inp_default_setup = self._get_validated_input(prompt=f"SensorSetup as default values (1) or own values (0): ",
         #                                          min_value=0,
@@ -111,6 +137,8 @@ class sim_control:
             self.start_new_subprocess(script=r"_02_data_source/temperature_sensor.py")
         elif inp_sensor_type == nc_msg.sens_type.TYPE_PRESSURE:
             self.start_new_subprocess(script=r"_02_data_source/pressure_sensor.py")
+        elif inp_sensor_type == nc_msg.sens_type.TYPE_ANGLE:
+            self.start_new_subprocess(script=r"_02_data_source/angle_sensor.py")
         print("")
         input("Press Enter to return to the menu.")
 
@@ -164,7 +192,7 @@ class sim_control:
         print("Exiting program & killing all processes. Goodbye!")
 
         for p in processes:  # Kill all processes
-            p.terminate()
+            p.kill()
         exit()
 
     def _control_communication(self, req_id: nc_msg.ctrl_request_id, value_0: int=0, value_1: int=0, value_2: int=0, value_3: int=0,
@@ -254,7 +282,7 @@ class sim_control:
     def main_menu(self):
         """Display the main menu and handle user input."""
         # start Server
-        self.start_new_subprocess(script="_04_data_analyse/analyse_server.py")
+        self.start_new_subprocess(script="_04_data_analyze/analyze_server.py")
         self.start_new_subprocess(script="_01_com_manager/sensor_server.py")
         self.start_new_subprocess(script="_03_data_output/display_output.py")
         # start loop

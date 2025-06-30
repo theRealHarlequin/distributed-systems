@@ -1,5 +1,8 @@
+import enum, os, sys
+
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from _01_project._00_data_structure import message_pb2 as nc_msg
-import enum
+
 
 
 def conv_sensor_sig_unit_enum_2_str(enum_value :enum):
@@ -16,7 +19,7 @@ def conv_sensor_sig_unit_enum_2_str(enum_value :enum):
         unit = "pa"
     elif enum_value == nc_msg.sens_signal_unit.UNIT_ROTA_RPM:
         unit = "rpm"
-    elif enum_value == nc_msg.sens_signal_unit.TYPE_ANGLE:
+    elif enum_value == nc_msg.sens_signal_unit.UNIT_ROTA_ANGLE:
         unit = "degree"
     return unit
 

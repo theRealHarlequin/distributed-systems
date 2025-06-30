@@ -1,8 +1,8 @@
-import logging, argparse, time
+import sys, os,  logging, argparse, asyncio, zmq, sys, zmq.asyncio
 from typing import List
 from datetime import datetime
 
-from matplotlib.pyplot import semilogx
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 from logger import Logger
 from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
@@ -10,9 +10,8 @@ from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_
 from _01_project._00_data_structure.data_structure import SensorItem, SensorStatus
 from _01_project._00_data_structure import message_pb2 as nc_msg
 from _01_project._03_data_output.display_plot import generate_plot
-import asyncio, zmq, sys, zmq.asyncio
 
-class AnalyseServer:
+class AnalyzeServer:
     def __init__(self, log_file_path: str = None):
         if sys.platform.startswith("win"):
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -92,15 +91,16 @@ class AnalyseServer:
                 elif msg_data.request_type == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
                     for sensor in self.sensor_database:
                         if sensor.id == msg_data.sensor_id:
-                            # ToDo Display Plots
                             if len(sensor.data) > 0 and sensor.sample_freq > 0:
-                                generate_plot(data={datetime.fromtimestamp(getattr(obj, 'timestamp')/100): getattr(obj, 'encoded_value') for obj in sensor.data},
+                                generate_plot(data={datetime.fromtimestamp(getattr(obj, 'timestamp')/100): getattr(obj, 'encoded_value')
+                                                    for obj in sensor.data if getattr(obj, 'timestamp') != 0},
                                               stats={'Sensor ID': sensor.id,
                                                     'Sensor Type': sensor.type,
                                                     'Active': 'True' if sensor.active else 'False',
                                                     'Sampling Rate': sensor.sample_freq,
                                                     'Start of Measurement': min([datetime.fromtimestamp(getattr(obj, 'timestamp')/100)
-                                                                                 for obj in sensor.data if hasattr(obj, 'timestamp')]).strftime("%Y-%m-%d %H:%M:%S"),
+                                                                                 for obj in sensor.data if hasattr(obj, 'timestamp')
+                                                                                 and getattr(obj, 'timestamp') != 0]).strftime("%Y-%m-%d %H:%M:%S"),
                                                     'End of Measurement': max([datetime.fromtimestamp(getattr(obj, 'timestamp')/100)
                                                                                for obj in sensor.data if hasattr(obj, 'timestamp')]).strftime("%Y-%m-%d %H:%M:%S"),
                                                     'Data Points': len(sensor.data)
@@ -109,7 +109,7 @@ class AnalyseServer:
 
     async def _display_push_data(self):
         while True:
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)
             if len(self.sensor_database) >= 1:
                 for sensor in self.sensor_database:
                     if len(sensor.data) > 1:
@@ -136,7 +136,7 @@ class AnalyseServer:
                               and self.disp_disp_sensor_status.upper_threshold != 0):
                             self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_TO_HIGH
 
-                        elif self.disp_disp_sensor_status.lower_threshold != 0 and self.disp_disp_sensor_status.upper_threshold != 0:
+                        elif self.disp_disp_sensor_status.lower_threshold != 0 or self.disp_disp_sensor_status.upper_threshold != 0:
                             self.disp_disp_sensor_status.threshold_status = nc_msg.disp_threshold_status.VALUE_INSIDE_AREA
 
                         else:
@@ -145,7 +145,7 @@ class AnalyseServer:
                         await self.disp_push_socket.send("2".encode() + b" " + self.disp_disp_sensor_status.SerializeToString())
                 self.disp_trans_done.done = 1
                 await self.disp_push_socket.send("1".encode() + b" " + self.disp_trans_done.SerializeToString())
-                self.log.log(msg=f"[DATA_TRANSFER] Pass Data to Analyse Server", level=logging.INFO)
+                self.log.log(msg=f"[DATA_TRANSFER] Push data to display", level=logging.INFO)
 
     def _append_status_to_sensor(self, status: SensorStatus, active):
         for item in self.sensor_database:
@@ -174,5 +174,10 @@ def parse_args():
 
 if __name__ == "__main__":
     log_dir = parse_args()
-    sensor_server = AnalyseServer(log_file_path=log_dir)
-    asyncio.run(sensor_server.run_server())
+    try:
+        sensor_server = AnalyzeServer(log_file_path=log_dir)
+        asyncio.run(sensor_server.run_server())
+    except Exception as e:
+        print(f"Error: {e}")
+        input("Press Enter to exit...")
+        raise

@@ -1,10 +1,13 @@
-import time, logging, argparse
+import time, logging, argparse, sys, os
+import asyncio, zmq, sys, zmq.asyncio
 from typing import List, Set
-from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_ctrl_type_enum_2_str
+
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 from logger import Logger
+from _01_project._99_helper.helper import conv_sensor_type_enum_2_str, conv_ctrl_type_enum_2_str
 from _01_project._00_data_structure import message_pb2 as nc_msg
 from _01_project._00_data_structure.data_structure import SensorStatus
-import asyncio, zmq, sys, zmq.asyncio
+
 
 
 class SensorServer:
@@ -231,6 +234,12 @@ def parse_args():
     return args.log_dir
 
 if __name__ == "__main__":
-    log_dir = parse_args()
-    sensor_server = SensorServer(log_file_path=log_dir, )
-    asyncio.run(sensor_server.run_server())
+    try:
+        log_dir = parse_args()
+        sensor_server = SensorServer(log_file_path=log_dir, )
+        asyncio.run(sensor_server.run_server())
+    except Exception as e:
+        print(f"Error: {e}")
+        input("Press Enter to exit...")
+        raise
+

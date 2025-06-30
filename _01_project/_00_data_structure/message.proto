@@ -18,6 +18,7 @@ enum sens_signal_unit {
 	UNIT_PRES_BAR = 3;
 	UNIT_PRES_PASCAL = 4;
 	UNIT_ROTA_RPM = 5;
+	UNIT_ROTA_ANGLE = 6;
 }
 
 enum sens_type {

@@ -1,15 +1,17 @@
-import random, zmq, logging, zmq.asyncio, asyncio, sys, time, math
-from enum import Enum
+import random, zmq, logging, zmq.asyncio, asyncio, sys, time, math, os
 from abc import ABC
-from logger import Logger
+
 from datetime import datetime as dt
-import _01_project._00_data_structure.message_pb2 as nc_msg
+
+sys.path.insert(0, str(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+from logger import Logger
+from _01_project._00_data_structure import message_pb2 as nc_msg
 from _01_project._99_helper.helper import conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str, conv_sig_value
 
 class Sensor(ABC):
     """A class representing a generic sensor."""
     def __init__(self, sens_type: nc_msg.sens_type, offset:float, factor:float, unit:str, min_value_area: int,
-                 max_value_area: int, send_freq_ms:int, log_file_path:str=None):
+                 max_value_area: int, send_freq_ms:int, log_file_path:str=None, rotor_freq_ms:float=5):
 
         ## Init Sensor
         self.id: int = 0
@@ -26,7 +28,7 @@ class Sensor(ABC):
         self.connected = False
 
         self.rot_amplitude = (max_value_area - min_value_area) / 2
-        self.rot_frequency = 1 / (send_freq_ms / 1000)  # Convert ms to Hz
+        self.rot_frequency = 1 / (rotor_freq_ms)  # Convert ms to Hz
         self.rot_phase = 0
         self.rot_start_time = time.time()
 
@@ -156,21 +158,28 @@ class RotSensor(Sensor):
 
 class AngSensor(Sensor):
     def __init__(self):
-        super().__init__(sens_type=nc_msg.sens_type.TYPE_ROTATION,
+        super().__init__(sens_type=nc_msg.sens_type.TYPE_ANGLE,
                          offset=0.0,
-                         factor=1.0,
-                         unit=nc_msg.sens_signal_unit.UNIT_ROTA_RPM,
-                         min_value_area=0,
-                         max_value_area=1,
-                         send_freq_ms=200)
+                         factor=0.01,
+                         unit=nc_msg.sens_signal_unit.UNIT_ROTA_ANGLE,
+                         min_value_area=-100,
+                         max_value_area=100,
+                         send_freq_ms=100)
 
 # Example usage
 if __name__ == "__main__":
     if sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    async def main():
-        temp_sensor = TempSensor()
-        await temp_sensor.start()
+    try:
+        async def main():
+            temp_sensor = TempSensor()
+            await temp_sensor.start()
+            asyncio.run(main())
+    except Exception as e:
+        print(f"Error: {e}")
+        input("Press Enter to exit...")
+        raise
 
-    asyncio.run(main())
+
+
