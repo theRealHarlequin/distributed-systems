@@ -1,0 +1,209 @@
+@startuml
+
+' Abstract class Sensor
+abstract class Sensor {
+  -id: int
+  -type: nc_msg.sens_type
+  -offset: float
+  -factor: float
+  -unit: str
+  -value: int
+  -value_encod: float
+  -_min_value: int
+  -_max_value: int
+  -_previous_values: list
+  -_sample_freq: int
+  -connected: bool
+  -rot_amplitude: float
+  -rot_frequency: float
+  -rot_phase: float
+  -rot_start_time: float
+  -ctx_req: zmq.asyncio.Context
+  -ctx_pub: zmq.asyncio.Context
+  -req_socket: zmq.asyncio.Socket
+  -pub_socket: zmq.asyncio.Socket
+  -sensor_comJoin_msg: nc_msg.sens_com_join
+  -sensor_comJoinResp_msg: nc_msg.sens_com_join_resp
+  -sensor_data_msg: nc_msg.sens_status
+  -log: Logger
+  +__init__(sens_type, offset, factor, unit, min_value_area, max_value_area, send_freq_ms, log_file_path)
+  +{abstract}start()
+  -_connect()
+  -_generate_value()
+  -_generate_value_sin()
+  -_conv_offset_two_dec(): float
+  -_conv_factor_two_dec(): float
+  -_send_data()
+}
+
+' Concrete Sensor classes
+class TempSensor {
+  +__init__()
+}
+
+class PresSensor {
+  +__init__()
+}
+
+class RotSensor {
+  +__init__()
+}
+
+class AngSensor {
+  +__init__()
+}
+
+' SensorServer class
+class SensorServer {
+  -log: Logger
+  -ctx_sub: zmq.asyncio.Context
+  -ctx_req: zmq.asyncio.Context
+  -ctx_req_ctr: zmq.asyncio.Context
+  -ctx_push: zmq.asyncio.Context
+  -sens_sub_socket: zmq.asyncio.Socket
+  -sens_rep_socket: zmq.asyncio.Socket
+  -ctrl_rep_socket: zmq.asyncio.Socket
+  -data_push_socket: zmq.asyncio.Socket
+  -_active_subscriptions: Set[str]
+  -push_send_output: List[SensorStatus]
+  -new_sensor_id: int
+  +__init__(log_file_path: str)
+  -_append_status_to_sensor(status: SensorStatus)
+  -_append_status_buffer(status: SensorStatus)
+  -_sensor_rep_responder()
+  -_control_rep_responder()
+  -_sensor_sub_listener()
+  +run_server()
+}
+
+' sim_control class
+class sim_control {
+  -current_dir: str
+  -processes: list
+  -log: Logger
+  -log_path: str
+  -run_in_new_console: bool
+  -ctx_req: zmq.Context
+  -ctrl_req_socket: zmq.REQ
+  -ctrl_req_structure: nc_msg.ctrl_RSDBI
+  -ctrl_resp_structure: nc_msg.ctrl_RSDBI_resp
+  -menu_options: list
+  +__init__()
+  +start_new_subprocess(script: str)
+  -_get_validated_input(prompt: str, min_value: int, max_value: int): int
+  -_clear_console()
+  -_add_sensor_to_system()
+  -_unsubscribe_sensor()
+  -_subscribe_sensor()
+  -_change_threshold_value()
+  -_display_plot()
+  -_exit_program()
+  -_control_communication(req_id: nc_msg.ctrl_request_id, value_0: int, value_1: int, value_2: int, value_3: int, value_4: int, value_5: int, value_6: int, value_7: int)
+  +main_menu()
+}
+
+' SensorStatus class
+class SensorStatus {
+  -_timestamp: int
+  -_id: int
+  -_sig_value: int
+  -_factor: int
+  -_offset: int
+  -_sig_unit: str
+  +__init__(timestamp: int, id: int, sig_value: int, factor: int, offset: int, sig_unit: str)
+  +timestamp: int
+  +id: int
+  +sig_value: int
+  +factor: int
+  +offset: int
+  +sig_unit: str
+  +encoded_value: float
+  +__str__(): str
+}
+
+' SensorItem class
+class SensorItem {
+  -_id: int
+  -_sample_freq: float
+  -_type: str
+  -_data: List[SensorStatus]
+  -_active: bool
+  -_lower_threshold: int
+  -_upper_threshold: int
+  +__init__(ident: int, sample_freq: float, type: str, lower_thre: int, upper_the: int)
+  +id: int
+  +sample_freq: float
+  +type: str
+  +data: List
+  +active: bool
+  +lower_threshold: int
+  +upper_threshold: int
+  +set_active(active: bool)
+  +append_sensor_value(value: SensorStatus)
+}
+
+' StatusDisplayItem class
+class StatusDisplayItem {
+  -_sensor_id: int
+  -_sample_freq: int
+  -_type: str
+  -_active: bool
+  -_timestamp: int
+  -_sig_value: int
+  -_factor: int
+  -_offset: int
+  -_sig_unit: str
+  -_lower_threshold: str
+  -_upper_threshold: str
+  -_threshold_status: str
+  +__init__(sensor_id: int, sample_freq: int, type: str, active: bool, timestamp: int, sig_value: int, factor: int, offset: int, sig_unit: str, lower_threshold: str, upper_threshold: str, threshold_status: str)
+  +sensor_id: int
+  +sample_freq: int
+  +type: str
+  +active: bool
+  +timestamp: int
+  +sig_value: int
+  +factor: int
+  +offset: int
+  +sig_unit: str
+  +lower_threshold: str
+  +upper_threshold: str
+  +threshold_status: str
+}
+
+' Display class
+class Display {
+  -_output_table: ConsoleTable
+  -_display_list: List[StatusDisplayItem]
+  +__init__()
+  -_data_pull_responder()
+  +run_server()
+}
+
+' AnalyseServer class
+class AnalyseServer {
+  -log: Logger
+  -ctx_pull: zmq.asyncio.Context
+  -ctx_push: zmq.asyncio.Context
+  -pull_socket: zmq.asyncio.Socket
+  -disp_push_socket: zmq.asyncio.Socket
+  -sensor_database: List[SensorItem]
+  +__init__(log_file_path: str)
+  -_data_pull_responder()
+  -_display_push_data()
+  -_append_status_to_sensor(status: SensorStatus, active: bool)
+  +run_server()
+}
+
+' Relationships
+Sensor <|-- TempSensor
+Sensor <|-- PresSensor
+Sensor <|-- RotSensor
+Sensor <|-- AngSensor
+SensorServer "1" -- "*" SensorStatus : manages
+sim_control "1" -- "*" Sensor : controls
+SensorItem "1" -- "*" SensorStatus : contains
+AnalyseServer "1" -- "*" SensorItem : manages
+Display "1" -- "*" StatusDisplayItem : displays
+
+@enduml

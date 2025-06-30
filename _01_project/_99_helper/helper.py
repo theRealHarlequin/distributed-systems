@@ -16,6 +16,8 @@ def conv_sensor_sig_unit_enum_2_str(enum_value :enum):
         unit = "pa"
     elif enum_value == nc_msg.sens_signal_unit.UNIT_ROTA_RPM:
         unit = "rpm"
+    elif enum_value == nc_msg.sens_signal_unit.TYPE_ANGLE:
+        unit = "degree"
     return unit
 
 
@@ -27,6 +29,8 @@ def conv_sensor_type_enum_2_str(enum_value: enum):
         sensor = "Pressure_Sensor"
     elif enum_value == nc_msg.sens_type.TYPE_ROTATION:
         sensor = "Rotation_Sensor"
+    elif enum_value == nc_msg.sens_type.TYPE_ANGLE:
+        sensor = "Angle_Sensor"
     return sensor
 
 
@@ -37,9 +41,10 @@ def conv_sensor_type_str_2_enum(sensor_str: str) -> nc_msg.sens_type:
         return nc_msg.sens_type.TYPE_PRESSURE
     elif sensor_str == "Rotation_Sensor":
         return nc_msg.sens_type.TYPE_ROTATION
+    elif sensor_str == "Angle_Sensor":
+        return nc_msg.sens_type.TYPE_ANGLE
     else:
         raise ValueError(f"Unknown sensor type string: {sensor_str}")
-
 
 
 def conv_threshold_status_enum_2_str(enum_value: enum):
@@ -80,5 +85,4 @@ def get_all_sensor_var() -> dict:
 
 
 def conv_sig_value(value: float, factor: float, offset: float) -> float:
-    var1 = (value * int(factor * 1000) / 1000 + int(offset * 1000) / 1000)
     return (value * int(factor * 1000) / 1000 + int(offset * 1000) / 1000)

@@ -60,8 +60,9 @@ class SensorStatus:
         return self._sig_unit
 
     @property
-    def encoded_value(self):
-        return (self.factor * self.sig_value + self.offset) / 1000
+    def encoded_value(self) -> float:
+        """Gets the signal unit."""
+        return (self.factor * self._sig_value + self.offset) / 1000
 
     def __str__(self):
         return (f"Sensor-ID {self.id}: TimeStamp: {dt.fromtimestamp(self.timestamp / 100)} ({self.timestamp}), "
@@ -87,7 +88,7 @@ class SensorItem:
         self._id: int = ident
         self._sample_freq: float = sample_freq
         self._type: str = type
-        self._data: List = [SensorStatus]
+        self._data: List[SensorStatus] = []
         self._active: bool = True
         self._lower_threshold: int = lower_thre
         self._upper_threshold: int = upper_the

@@ -2,15 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from typing import Dict, List
-from datetime import datetime
-# Call
-    #generate_plot(stats ={'Timestamp': 1234545, 'Sensor_ID': 12},
-    #                       data=dict(zip(timestamps, sensor_values)))
-
 
 def generate_plot(data:Dict, stats:Dict=None):
     statistic_data:List[List]= [[]]
-    time = [datetime.fromtimestamp(ts) for ts in list(data.keys())[1:]]
+    time = list(data.keys())
     value =list(data.values())
     sens_value_np = np.array(value)
     if stats is None:
@@ -39,10 +34,9 @@ def generate_plot(data:Dict, stats:Dict=None):
     ax1.set_title('Sensor Data')
     ax1.set_xlabel('Time')
     ax1.set_ylabel(f'DataUnit - {stats["Unit"] if "Unit" in stats.keys() else ""}')
-    ax1.set_ylim(-1.5, 1.5)
     ax1.legend()
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-    fig.autofmt_xdate()  # Rotate and align the tick labels
+    #fig.autofmt_xdate()  # Rotate and align the tick labels
 
     # Compute FFT
     if 'Sampling Rate' in stats.keys():
@@ -91,3 +85,4 @@ def generate_plot(data:Dict, stats:Dict=None):
 
     plt.tight_layout()
     plt.show()
+    pass

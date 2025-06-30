@@ -1,4 +1,4 @@
-import random, zmq, logging, zmq.asyncio, asyncio, sys
+import random, zmq, logging, zmq.asyncio, asyncio, sys, time, math
 from enum import Enum
 from abc import ABC
 from logger import Logger
@@ -24,6 +24,11 @@ class Sensor(ABC):
         self._previous_values:list = []
         self._sample_freq = send_freq_ms
         self.connected = False
+
+        self.rot_amplitude = (max_value_area - min_value_area) / 2
+        self.rot_frequency = 1 / (send_freq_ms / 1000)  # Convert ms to Hz
+        self.rot_phase = 0
+        self.rot_start_time = time.time()
 
         ## Init Connection
         self.ctx_req = zmq.asyncio.Context()
@@ -69,13 +74,17 @@ class Sensor(ABC):
 
     def _generate_value(self):
         self._previous_values.append(random.uniform(self._min_value, self._max_value))
-
         if len(self._previous_values) > 6:
             self._previous_values.pop(0)
 
         # Mittelwert berechnen
         self.value = int(sum(self._previous_values) / len(self._previous_values))
+        self.value_encod = (self._conv_factor_two_dec() * self.value) + self._conv_offset_two_dec()
 
+    def _generate_value_sin(self):
+        t = time.time() - self.rot_start_time
+        middle = (self._max_value + self._min_value) / 2
+        self.value = int(middle + self.rot_amplitude * math.sin(2 * math.pi * self.rot_frequency * t + self.rot_phase))
         self.value_encod = (self._conv_factor_two_dec() * self.value) + self._conv_offset_two_dec()
 
     def _conv_offset_two_dec(self) -> float:
@@ -108,7 +117,10 @@ class Sensor(ABC):
 
         # Start cyclic publishing
         while True:
-            self._generate_value()
+            if self.type == nc_msg.sens_type.TYPE_ANGLE:
+                self._generate_value_sin()
+            else:
+                self._generate_value()
             await self._send_data()
             await asyncio.sleep(self._sample_freq / 1000)
 
@@ -141,6 +153,16 @@ class RotSensor(Sensor):
                          min_value_area=0,
                          max_value_area=1500,
                          send_freq_ms=500)
+
+class AngSensor(Sensor):
+    def __init__(self):
+        super().__init__(sens_type=nc_msg.sens_type.TYPE_ROTATION,
+                         offset=0.0,
+                         factor=1.0,
+                         unit=nc_msg.sens_signal_unit.UNIT_ROTA_RPM,
+                         min_value_area=0,
+                         max_value_area=1,
+                         send_freq_ms=200)
 
 # Example usage
 if __name__ == "__main__":

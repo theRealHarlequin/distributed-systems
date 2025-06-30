@@ -24,6 +24,7 @@ enum sens_type {
 	TYPE_TEMPERATURE = 0;
 	TYPE_PRESSURE = 1;
 	TYPE_ROTATION = 2;
+	TYPE_ANGLE = 3;
 }
 
 enum disp_threshold_status {

@@ -1,0 +1,70 @@
+@startuml
+actor User
+participant "sim_control" as SimControl
+participant "Sensor" as Sensor
+participant "SensorServer" as SensorServer
+participant "AnalyseServer" as AnalyseServer
+participant "Display" as Display
+
+User -> SimControl: start simulation
+activate SimControl
+
+SimControl -> SensorServer: start_new_subprocess()
+activate SensorServer
+SimControl -> AnalyseServer: start_new_subprocess()
+activate AnalyseServer
+SimControl -> Display: start_new_subprocess()
+activate Display
+
+User -> SimControl: add new sensor
+SimControl -> Sensor: create and start
+activate Sensor
+
+Sensor -> SensorServer: connect (REQ)
+SensorServer -> SensorServer : generate Sensor ID
+SensorServer -> AnalyseServer: register new sensor (PUSH)
+SensorServer --> Sensor: connection response (REP)
+
+loop Sensor active
+    Sensor -> Sensor: generate value
+    Sensor -> SensorServer: send data (PUB)
+    SensorServer -> AnalyseServer: forward sensor data (PUSH)
+    AnalyseServer -> AnalyseServer: process data
+    AnalyseServer -> Display: send processed data (PUSH)
+    Display -> Display: update display
+end
+
+User -> SimControl: unsubscribe sensor
+SimControl -> SensorServer: unsubscribe request (REQ)
+SensorServer -> AnalyseServer: update sensor status
+SensorServer --> SimControl: unsubscribe response (REP)
+
+User -> SimControl: subscribe sensor
+SimControl -> SensorServer: subscribe request (REQ)
+SensorServer -> AnalyseServer: update sensor status
+SensorServer --> SimControl: subscribe response (REP)
+
+User -> SimControl: change threshold
+SimControl -> SensorServer: set threshold request (REQ)
+SensorServer -> AnalyseServer: update threshold
+SensorServer --> SimControl: set threshold response (REP)
+
+User -> SimControl: display plot
+SimControl -> SensorServer: display plot request (REQ)
+SensorServer -> AnalyseServer: generate plot
+AnalyseServer -> AnalyseServer: create plot
+SensorServer --> SimControl: display plot response (REP)
+
+User -> SimControl: exit program
+SimControl -> Sensor: terminate
+deactivate Sensor
+SimControl -> SensorServer: terminate
+deactivate SensorServer
+SimControl -> AnalyseServer: terminate
+deactivate AnalyseServer
+SimControl -> Display: terminate
+deactivate Display
+SimControl -> User: simulation ended
+deactivate SimControl
+
+@enduml

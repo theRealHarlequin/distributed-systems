@@ -1,0 +1,131 @@
+@startuml
+
+' Abstract class Sensor
+abstract class Sensor {
+  -_connect()
+  -_generate_value()
+  -_generate_value_sin()
+  -_conv_offset_two_dec(): float
+  -_conv_factor_two_dec(): float
+  -_send_data()
+}
+
+' Concrete Sensor classes
+class TempSensor {
+  +__init__()
+}
+
+class PresSensor {
+  +__init__()
+}
+
+class RotSensor {
+  +__init__()
+}
+
+class AngSensor {
+  +__init__()
+}
+
+' SensorServer class
+class SensorServer {
+  +__init__(log_file_path: str)
+  -_append_status_to_sensor(status: SensorStatus)
+  -_append_status_buffer(status: SensorStatus)
+  -_sensor_rep_responder()
+  -_control_rep_responder()
+  -_sensor_sub_listener()
+  +run_server()
+}
+
+' sim_control class
+class sim_control {
+  +__init__()
+  +start_new_subprocess(script: str)
+  -_get_validated_input(prompt: str, min_value: int, max_value: int): int
+  -_clear_console()
+  -_add_sensor_to_system()
+  -_unsubscribe_sensor()
+  -_subscribe_sensor()
+  -_change_threshold_value()
+  -_display_plot()
+  -_exit_program()
+  -_control_communication()
+  +main_menu()
+}
+
+' SensorStatus class
+class SensorStatus {
+  -_timestamp: int
+  -_id: int
+  -_sig_value: int
+  -_factor: int
+  -_offset: int
+  -_sig_unit: str
+}
+
+' SensorItem class
+class SensorItem {
+  -_id: int
+  -_sample_freq: float
+  -_type: str
+  -_data: List[SensorStatus]
+  -_active: bool
+  -_lower_threshold: int
+  -_upper_threshold: int
+  +__init__()
+  +set_active(active: bool)
+  +append_sensor_value(value: SensorStatus)
+}
+
+' StatusDisplayItem class
+class StatusDisplayItem {
+  -_sensor_id: int
+  -_sample_freq: int
+  -_type: str
+  -_active: bool
+  -_timestamp: int
+  -_sig_value: int
+  -_factor: int
+  -_offset: int
+  -_sig_unit: str
+  -_lower_threshold: str
+  -_upper_threshold: str
+  -_threshold_status: str
+  +__init__()
+}
+
+' Display class
+class Display {
+  -_output_table: ConsoleTable
+  -_display_list: List[StatusDisplayItem]
+  +__init__()
+  -_data_pull_responder()
+  +run_server()
+}
+
+' AnalyseServer class
+class AnalyseServer {
+  +__init__(log_file_path: str)
+  -_data_pull_responder()
+  -_display_push_data()
+  -_append_status_to_sensor(status: SensorStatus, active: bool)
+  +run_server()
+}
+
+' Relationships
+Sensor <|-- TempSensor
+Sensor <|-- PresSensor
+Sensor <|-- RotSensor
+Sensor <|-- AngSensor
+
+SensorServer "1" -left- "*" Sensor : manages
+SensorServer "1" -- "1" AnalyseServer : communicate
+AnalyseServer "1" -- "1" Display: control
+sim_control "1" -- "*" Sensor : generate
+sim_control "1" -- "1" SensorServer : control_actions
+SensorItem "1" -- "*" SensorStatus : contains
+AnalyseServer "1" -- "*" SensorItem : manages
+Display "1" -- "*" StatusDisplayItem : displays
+
+@enduml

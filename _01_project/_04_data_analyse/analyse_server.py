@@ -1,5 +1,8 @@
 import logging, argparse, time
 from typing import List
+from datetime import datetime
+
+from matplotlib.pyplot import semilogx
 
 from logger import Logger
 from _01_project._99_helper.helper import (conv_sig_value, conv_sensor_sig_unit_enum_2_str, conv_sensor_type_enum_2_str,
@@ -47,61 +50,66 @@ class AnalyseServer:
             topic, raw_data = message.split(b" ", 1)  # topic: 1 -> Registration Sensor | 2 -> Data
             if topic == b'1':
                 self.sens_reg_structure.ParseFromString(raw_data)
-                data = self.sens_reg_structure
-                new_sensor = SensorItem(ident=data.connect, sample_freq=data.sample_freq, type=conv_sensor_type_enum_2_str(data.type))
+                msg_data = self.sens_reg_structure
+                new_sensor = SensorItem(ident=msg_data.connect, sample_freq=msg_data.sample_freq, type=conv_sensor_type_enum_2_str(msg_data.type))
                 self.sensor_database.append(new_sensor)
                 self.log.log(msg=f"[NEW_SENSOR] Received Sensor request to connect. "
-                                 f"Type: {conv_sensor_type_enum_2_str(data.type)}"
-                                 f", Sample_Frequency: {data.sample_freq}", level=logging.INFO)
+                                 f"Type: {conv_sensor_type_enum_2_str(msg_data.type)}"
+                                 f", Sample_Frequency: {msg_data.sample_freq}", level=logging.INFO)
+
             elif topic == b'2':
                 self.data_transfer_structure.ParseFromString(raw_data)
-                data = self.data_transfer_structure
-                tmp_status = SensorStatus(timestamp=data.timestamp, id=data.id, factor=data.factor, offset=data.offset,
-                                                 sig_value=data.sig_value, sig_unit=data.sig_unit)
+                msg_data = self.data_transfer_structure
+                tmp_status = SensorStatus(timestamp=msg_data.timestamp, id=msg_data.id, factor=msg_data.factor, offset=msg_data.offset,
+                                                 sig_value=msg_data.sig_value, sig_unit=msg_data.sig_unit)
 
                 self.log.log(msg=f"[DATA_TRANS] Received Sensor Data -- "
                                  f"Time: {tmp_status.timestamp} - Sensor ID: Sensor {tmp_status.id} -  raw: {tmp_status.sig_value} "
                                  f"Value: {conv_sig_value(value=tmp_status.sig_value, factor= tmp_status.factor, offset=tmp_status.offset) }"
                                  f" {conv_sensor_sig_unit_enum_2_str(tmp_status.sig_unit)}", level=logging.INFO)
 
-                self._append_status_to_sensor(status=tmp_status, active=1 if data.active == 1 else 0)
+                self._append_status_to_sensor(status=tmp_status, active=1 if msg_data.active == 1 else 0)
+
             elif topic == b'3':
                 self.ctrl_trans_structure.ParseFromString(raw_data)
-                data = self.ctrl_trans_structure
-                if data.request_type == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
+                msg_data = self.ctrl_trans_structure
+                if msg_data.request_type == nc_msg.ctrl_request_id.SET_LOWER_THRESHOLD:
                     for sensor in self.sensor_database:
-                        if sensor.id == data.sensor_id:
-                            sensor.lower_threshold = data.value
+                        if sensor.id == msg_data.sensor_id:
+                            sensor.lower_threshold = msg_data.value
                             self.log.log(msg=f"[CTRL_TRANS] Received Set lower threshold of Sensor "
-                                             f"{data.sensor_id} to {data.value}", level=logging.INFO)
-                            pass
-                elif data.request_type == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
-                    for sensor in self.sensor_database:
-                        if sensor.id == data.sensor_id:
-                            sensor.upper_threshold = data.value
-                            self.log.log(msg=f"[CTRL_TRANS] Received Set upper threshold of Sensor "
-                                             f"{data.sensor_id} to {data.value}", level=logging.INFO)
+                                             f"{msg_data.sensor_id} to {msg_data.value}", level=logging.INFO)
                             pass
 
-                elif data.request_type == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
+                elif msg_data.request_type == nc_msg.ctrl_request_id.SET_UPPER_THRESHOLD:
                     for sensor in self.sensor_database:
-                        if sensor.id == data.sensor_id:
+                        if sensor.id == msg_data.sensor_id:
+                            sensor.upper_threshold = msg_data.value
+                            self.log.log(msg=f"[CTRL_TRANS] Received Set upper threshold of Sensor "
+                                             f"{msg_data.sensor_id} to {msg_data.value}", level=logging.INFO)
+                            pass
+
+                elif msg_data.request_type == nc_msg.ctrl_request_id.DISPLAY_GRAPH:
+                    for sensor in self.sensor_database:
+                        if sensor.id == msg_data.sensor_id:
                             # ToDo Display Plots
                             if len(sensor.data) > 0 and sensor.sample_freq > 0:
-                                generate_plot(data={getattr(obj, 'timestamp'): getattr(obj, 'encoded_value') for obj in sensor.data},
+                                generate_plot(data={datetime.fromtimestamp(getattr(obj, 'timestamp')/100): getattr(obj, 'encoded_value') for obj in sensor.data},
                                               stats={'Sensor ID': sensor.id,
                                                     'Sensor Type': sensor.type,
                                                     'Active': 'True' if sensor.active else 'False',
                                                     'Sampling Rate': sensor.sample_freq,
-                                                    'Start of Measurement': min([obj.timestamp for obj in sensor.data][1:]),
-                                                    'End of Measurement': max([obj.timestamp for obj in sensor.data][1:]),
+                                                    'Start of Measurement': min([datetime.fromtimestamp(getattr(obj, 'timestamp')/100)
+                                                                                 for obj in sensor.data if hasattr(obj, 'timestamp')]).strftime("%Y-%m-%d %H:%M:%S"),
+                                                    'End of Measurement': max([datetime.fromtimestamp(getattr(obj, 'timestamp')/100)
+                                                                               for obj in sensor.data if hasattr(obj, 'timestamp')]).strftime("%Y-%m-%d %H:%M:%S"),
                                                     'Data Points': len(sensor.data)
                                                     })
                             pass
 
     async def _display_push_data(self):
         while True:
-            await asyncio.sleep(2)
+            await asyncio.sleep(0.5)
             if len(self.sensor_database) >= 1:
                 for sensor in self.sensor_database:
                     if len(sensor.data) > 1:
