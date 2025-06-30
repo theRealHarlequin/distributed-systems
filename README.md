@@ -33,3 +33,12 @@ Design a solution concept for the task described above.
 - ✅ Message format documentation using **Protocol Buffers (Protobuf-IDL)**  
 - ✅ Implementation of your concept  
 - ✅ Demonstration of its functionality  
+
+## Nessesary Libs
+Please install these libs before use:
+- protobuf
+- pyzmq
+- matplotlib
+
+## documentation
+Documentation can be found in the subfolder '_01_project/_09_docu'
